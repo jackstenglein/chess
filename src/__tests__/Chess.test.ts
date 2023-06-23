@@ -110,7 +110,6 @@ describe('Chess', function () {
         expect(secondMove?.san).toBe('Kd3');
         expect(chess.lastMove()?.san).toBe('Bc5#');
         expect(chess.isGameOver()).toBe(true);
-        console.log('chess.lastMove(): ', chess.lastMove());
         expect(chess.lastMove()?.isCheckmate).toBe(true);
         expect(chess.isCheckmate()).toBe(true);
         expect(chess.isDraw()).toBe(false);
@@ -246,8 +245,10 @@ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
         expect(chess.moves().length).toBe(20);
         chess.move('e5');
         expect(chess.moves().length).toBe(22);
-        expect(JSON.stringify(chess.moves({ square: 'e2' }))).toBe('["e3","e4"]');
-        expect(JSON.stringify(chess.moves({ piece: 'n' }))).toBe('["Na4","Nb5","Nd5","Ne4","Nb1","Nf3","Nh3"]');
+        expect(JSON.stringify(chess.moves({ square: 'e2' }).map((m) => m.san))).toBe('["e3","e4"]');
+        expect(JSON.stringify(chess.moves({ piece: 'n' }).map((m) => m.san))).toBe(
+            '["Na4","Nb5","Nd5","Ne4","Nb1","Nf3","Nh3"]'
+        );
     });
 
     it('should detect a check in a game without moves', function () {
