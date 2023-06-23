@@ -1,12 +1,11 @@
 {
     "compilerOptions": {
-        "target": "ES2015",
-        "module": "ESNext",
-        "moduleResolution": "Node",
-        "declaration": true,
-        "outDir": "./lib",
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "removeComments": false,
+        "sourceMap": true,
         "strict": true,
-        "forceConsistentCasingInFileNames": true
+        "target": "ES2015"
     },
     "include": ["src"],
     "exclude": ["node_modules", "**/__tests__/*"]
