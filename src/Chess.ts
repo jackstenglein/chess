@@ -5,7 +5,9 @@
  */
 import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece, Move as ChessJsMove } from 'chess.js';
 
-import { Pgn, TAGS, Move } from '@jackstenglein/pgn-parser';
+import { Move } from './History';
+import { Pgn } from './Pgn';
+import { TAGS } from './Header';
 
 export const PIECES = {
     p: { name: 'pawn', value: 1 },
@@ -350,8 +352,8 @@ export class Chess {
      * @param renderNags optional, default true
      * @returns {string} the PGN of the game.
      */
-    renderPgn(renderHeader = true, renderComments = true, renderNags = true): string {
-        return this.pgn.render(renderHeader, renderComments, renderNags);
+    renderPgn(width = -1, renderHeader = true, renderComments = true, renderNags = true): string {
+        return this.pgn.render(width, renderHeader, renderComments, renderNags);
     }
 
     /**

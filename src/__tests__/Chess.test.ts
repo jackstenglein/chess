@@ -1,7 +1,7 @@
 /**
  * @author Stefan Haack (https://shaack.com)
  */
-import { TAGS } from '@jackstenglein/pgn-parser';
+import { TAGS } from '../Header';
 import { Chess, COLOR, FEN } from '../Chess';
 
 describe('Chess', function () {
@@ -66,7 +66,7 @@ describe('Chess', function () {
 [SetUp "1"]
 [FEN "5rk1/2nb1p1p/1p4p1/p2p2P1/1p2qP1P/1P2P3/P1Q1NK2/1B5R w - - 0 1"]
 
-1. Qc1 Qe6 2. Qxc7 
+1. Qc1 Qe6 2. Qxc7
 0-1`;
         const chess = new Chess({ pgn: pgn });
         expect(chess.history()[2].san).toBe('Qxc7');
@@ -86,7 +86,7 @@ describe('Chess', function () {
 [SetUp "1"]
 [FEN "r1b1Q1k1/1p2bpqp/8/8/p1Pr4/4PpN1/P6P/R4RK1 b - - 0 1"]
 
-1... Bf8 (1... Qf8? 2. Qxf8+ Bxf8 3. exd4) 2. exd4 Qxd4+ {%Q} 3. Kh1 Bh3 
+1... Bf8 (1... Qf8? 2. Qxf8+ Bxf8 3. exd4) 2. exd4 Qxd4+ {%Q} 3. Kh1 Bh3
 0-1`;
         chess.loadPgn(pgn);
         expect(5).toBe(chess.pgn.history.moves.length);
@@ -100,8 +100,7 @@ describe('Chess', function () {
 [FEN "8/8/b2Bq3/7Q/3kp3/5pP1/8/3K4 w - - 0 1"]
 [Result "1-0"]
 
-1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 
-1-0`;
+1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`;
         chess.loadPgn(pgn);
         expect(chess.turn()).toBe(COLOR.black);
         const firstMove = chess.history()[0];
@@ -118,8 +117,7 @@ describe('Chess', function () {
 [FEN "8/8/b2Bq3/7Q/3kp3/5pP1/8/3K4 w - - 0 1"]
 [Result "1-0"]
 
-1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+
-Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
+1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
         );
     });
 
@@ -154,7 +152,7 @@ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
         const pgn = `[SetUp "1"]
 [FEN "8/8/b2Bq3/7Q/3kp3/5pP1/8/3K4 w - - 0 1"]
 
-1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 
+1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5#
 1-0`;
         chess.loadPgn(pgn);
         expect(chess.pieces('k').length).toBe(2);
@@ -165,7 +163,7 @@ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
         const pgn = `[SetUp "1"]
 [FEN "8/8/b2Bq3/7Q/3kp3/5pP1/8/3K4 w - - 0 1"]
 
-1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 
+1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5#
 1-0`;
         chess.loadPgn(pgn);
         expect(chess.history().length).toBe(9);
@@ -178,7 +176,7 @@ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
         const pgn = `[SetUp "1"]
 [FEN "8/8/b2Bq3/7Q/3kp3/5pP1/8/3K4 w - - 0 1"]
 
-1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 
+1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5#
 1-0`;
         chess.loadPgn(pgn);
         chess.undo(chess.history()[5]);
@@ -254,5 +252,31 @@ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
     it('should detect a check in a game without moves', function () {
         const chess = new Chess('4k3/1P6/8/b7/6r1/8/pp2PPPP/2R1KBNR w K - 0 1');
         expect(chess.isCheck()).toBeTruthy();
+    });
+
+    it('should read puzzle pgn', function () {
+        const pgn = `[Event "Titled Tuesday 2nd Nov"]
+[Site "chess.com INT"]
+[Date "2021.11.02"]
+[Round "5"]
+[White "Perera Alfonso, R."]
+[Black "Narayanan, Sri"]
+[Result "1-0"]
+[ECO "B15"]
+[WhiteElo "2354"]
+[BlackElo "2540"]
+[Annotator "Jesse"]
+[SetUp "1"]
+[FEN "r1bqr1k1/pp1n1pp1/2pb1p2/8/3P1B1p/2PB3P/PPQ1NPP1/R4RK1 b - - 0 12"]
+[PlyCount "16"]
+[EventDate "2021.11.02"]
+
+12... Rxe2 $2 {this is a trick problem :-) Re2 doesn't work so black
+should play Nf8 with equality} (12... Nf8 $10) (12... Bxf4 $10) 13. Qxe2 Bxf4
+14. Qe4 $1 $18 {whoops!} Qc7 15. Qh7+ Kf8 16. Rae1 Ne5 17. dxe5 fxe5 18. Qh8+
+Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
+
+        const chess = new Chess({ pgn });
+        console.log(chess.pgn.render());
     });
 });
