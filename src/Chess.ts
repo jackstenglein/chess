@@ -3,14 +3,7 @@
  * Repository: https://github.com/shaack/cm-chess
  * License: MIT, see file 'LICENSE'
  */
-import {
-    Chess as ChessJs,
-    SQUARES,
-    Square,
-    PieceSymbol,
-    Piece as ChessJsPiece,
-    Move as ChessJsMove,
-} from 'chess.js';
+import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece, Move as ChessJsMove } from 'chess.js';
 
 import { Pgn, TAGS, Move } from '@jackstenglein/pgn-parser';
 
@@ -262,11 +255,7 @@ export class Chess {
      * @param sloppy to allow sloppy SAN
      * @returns {Move|null} The created Move, if successful.
      */
-    move(
-        notation: string,
-        previousMove: Move | undefined = undefined,
-        sloppy = true
-    ): Move | null {
+    move(notation: string, previousMove: Move | undefined = undefined, sloppy = true): Move | null {
         try {
             const moveResult = this.pgn.history.addMove(notation, previousMove, sloppy);
             publishEvent(this.observers, {

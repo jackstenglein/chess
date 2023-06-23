@@ -54,9 +54,7 @@ describe('Chess', function () {
         const firstMove = chess.history()[0];
         expect(firstMove.color).toBe('w');
         expect(firstMove.san).toBe('e4');
-        expect(firstMove.fen).toBe(
-            'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1'
-        );
+        expect(firstMove.fen).toBe('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1');
         expect(chess.history()[19].commentAfter).toBe('Kasparov schüttelt kurz den Kopf');
     });
 
@@ -231,11 +229,7 @@ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
         return new Promise<void>((resolve, reject) => {
             const chess = new Chess();
             chess.addObserver((event) => {
-                if (
-                    event.type === 'legalMove' &&
-                    event.move?.from === 'e2' &&
-                    event.move?.to === 'e4'
-                ) {
+                if (event.type === 'legalMove' && event.move?.from === 'e2' && event.move?.to === 'e4') {
                     resolve();
                 } else {
                     reject('error event');
@@ -253,9 +247,7 @@ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5# 1-0`
         chess.move('e5');
         expect(chess.moves().length).toBe(22);
         expect(JSON.stringify(chess.moves({ square: 'e2' }))).toBe('["e3","e4"]');
-        expect(JSON.stringify(chess.moves({ piece: 'n' }))).toBe(
-            '["Na4","Nb5","Nd5","Ne4","Nb1","Nf3","Nh3"]'
-        );
+        expect(JSON.stringify(chess.moves({ piece: 'n' }))).toBe('["Na4","Nb5","Nd5","Ne4","Nb1","Nf3","Nh3"]');
     });
 
     it('should detect a check in a game without moves', function () {
