@@ -3,7 +3,7 @@
         "esModuleInterop": true,
         "moduleResolution": "node",
         "removeComments": false,
-        "sourceMap": true,
+        "sourceMap": false,
         "strict": true,
         "target": "ES2015"
     },
