@@ -49,6 +49,8 @@ function publishEvent(observers: Observer[], event: Event) {
     }
 }
 
+type CandidateMove = string | { from: string; to: string; promotion?: string };
+
 interface MovesOptions {
     square?: Square;
     piece?: PieceSymbol;
@@ -93,16 +95,18 @@ export class Chess {
     }
 
     /**
-     * Sets currentMove to the provided move.
+     * Sets currentMove to the provided move and returns the new current Move.
      * @param move The move to set the currentMove to. If non-null, it must exist in the pgn history.
+     * @returns The new current Move.
      */
-    seek(move: Move | null) {
+    seek(move: Move | null): Move | null {
         this._currentMove = move;
         if (move) {
             this.chessjs.load(move.fen);
         } else {
             this.chessjs.load(this.setUpFen());
         }
+        return move;
     }
 
     /**
@@ -138,44 +142,64 @@ export class Chess {
         return move.previous;
     }
 
-    // TODO: isMainline and isVariation don't take promotion into account.
-
     /**
-     * Returns whether the provided candidate move is the mainline continuation from the provided Move.
-     * @param orig The origin square for the candidate move.
-     * @param dest The destination square for the candidate move.
-     * @param move The Move to check from. Defaults to the current Move.
-     * @returns True if the provided candidate move is the mainline continuation from `move`.
+     * Returns whether the provided candidate move matches the provided Move.
+     * @param candidate The candidate move to check.
+     * @param move The Move to check.
+     * @returns True if the candidate move is the same as the Move.
      */
-    isMainline(orig: string, dest: string, move = this._currentMove): boolean {
-        const nextMove = this.nextMove(move);
-        if (!nextMove) {
-            return false;
-        }
-        return nextMove.from === orig && nextMove.to === dest;
-    }
-
-    /**
-     * Returns whether the provided candidate move is an existing variation of the provided Move.
-     * @param orig The origin square for the move to check.
-     * @param dest The destination square for the move to check.
-     * @param move The Move to check from. Defaults to the current Move.
-     * @returns True if the provided candidate move exists in the Move's variations.
-     */
-    isVariation(orig: string, dest: string, move = this._currentMove): boolean {
+    candidateMatches(candidate: CandidateMove, move: Move | null): boolean {
         if (!move) {
             return false;
         }
-        for (const variant of move.variations) {
+        if (typeof candidate === 'string') {
+            return move.san === candidate;
+        }
+        return move.from === candidate.from && move.to === candidate.to && move.promotion === candidate.promotion;
+    }
+
+    /**
+     * Returns whether the provided candidate move is the mainline continuation from the provided Move.
+     * @param candidate The candidate move to check.
+     * @param move The Move to check from. Defaults to the current Move.
+     * @returns True if the provided candidate move is the mainline continuation from `move`.
+     */
+    isMainline(candidate: CandidateMove, move = this._currentMove): boolean {
+        const nextMove = this.nextMove(move);
+        return this.candidateMatches(candidate, nextMove);
+    }
+
+    /**
+     * Returns whether the provided candidate move is an existing variation continuation from the provided Move.
+     * @param candidate The candidate move to check.
+     * @param move The Move to check from. Defaults to the current Move.
+     * @returns True if the provided candidate move exists in the Move's variations.
+     */
+    isVariation(candidate: CandidateMove, move = this._currentMove): boolean {
+        return this.getVariation(candidate, move) !== null;
+    }
+
+    /**
+     * Returns the provided candidate move only if it is an existing variation continuation of the provided Move.
+     * @param candidate The candidate move to fetch.
+     * @param move The Move to check from. Defaults to the current Move.
+     * @returns The provided candidate move only if it already exists in the Move's variations.
+     */
+    getVariation(candidate: CandidateMove, move = this._currentMove): Move | null {
+        const nextMove = this.nextMove(move);
+        if (!nextMove) {
+            return null;
+        }
+        for (const variant of nextMove.variations) {
             if (variant.length === 0) {
                 continue;
             }
-            const move = variant[0];
-            if (move.from === orig && move.to === dest) {
-                return true;
+            const m = variant[0];
+            if (this.candidateMatches(candidate, m)) {
+                return m;
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -346,31 +370,47 @@ export class Chess {
     }
 
     /**
-     * Make a move in the game and update the currentMove.
-     * @param move The move to make
+     * Make a move in the game and update the currentMove. If the move already exists in the PGN history,
+     * it is returned unchanged.
+     * @param move The move to make.
      * @param previousMove The move to play from. If not included, the currentMove is used.
      * @param sloppy to allow sloppy SAN
-     * @returns {Move|null} The created Move, if successful.
+     * @returns {Move|null} The created or existing Move, if successful.
      */
-    move(
-        notation: string | { from: string; to: string; promotion?: string },
-        previousMove: Move | null = this._currentMove,
-        sloppy = true
-    ): Move | null {
+    move(candidate: CandidateMove, previousMove: Move | null = this._currentMove, sloppy = true): Move | null {
+        const nextMove = this.nextMove(previousMove);
+        if (this.candidateMatches(candidate, nextMove)) {
+            publishEvent(this.observers, {
+                type: EVENT_TYPE.legalMove,
+                move: nextMove!,
+                previousMove: previousMove,
+            });
+            return this.seek(nextMove);
+        }
+
+        const existingVariant = this.getVariation(candidate, previousMove);
+        if (existingVariant) {
+            publishEvent(this.observers, {
+                type: EVENT_TYPE.legalMove,
+                move: existingVariant,
+                previousMove: previousMove,
+            });
+            return this.seek(existingVariant);
+        }
+
+        // The move doesn't already exist as the mainline or a continuation, so we add it to the PGN.
         try {
-            const moveResult = this.pgn.history.addMove(notation, previousMove, sloppy);
+            const moveResult = this.pgn.history.addMove(candidate, previousMove, sloppy);
             publishEvent(this.observers, {
                 type: EVENT_TYPE.legalMove,
                 move: moveResult,
                 previousMove: previousMove,
             });
-            this._currentMove = moveResult;
-            this.chessjs.load(this._currentMove.fen);
-            return moveResult;
+            return this.seek(moveResult);
         } catch (e) {
             publishEvent(this.observers, {
                 type: EVENT_TYPE.illegalMove,
-                notation,
+                notation: candidate,
                 previousMove,
             });
             return null;
@@ -409,7 +449,7 @@ export class Chess {
      * @param sloppy to allow sloppy SAN
      * @returns the move object or null if not valid
      */
-    validateMove(notation: string, previousMove = this._currentMove, sloppy = true) {
+    validateMove(notation: CandidateMove, previousMove = this._currentMove, sloppy = true): Move | null {
         return this.pgn.history.validateMove(notation, previousMove, sloppy);
     }
 
