@@ -3,25 +3,9 @@
  * Repository: https://github.com/shaack/cm-pgn
  * License: MIT, see file 'LICENSE'
  */
-// import * as pgnParser from './parser/pgnParser.js';
-import { parse, ParseTree } from '@mliebelt/pgn-parser';
 import { PgnMove } from '@mliebelt/pgn-types';
 import { Chess, Move as ChessJsMove } from 'chess.js';
 import { Fen } from './Fen';
-
-class IllegalMoveException {
-    fen: string;
-    notation: string;
-
-    constructor(fen: string, notation: string) {
-        this.fen = fen;
-        this.notation = notation;
-    }
-
-    toString() {
-        return 'IllegalMoveException: ' + this.fen + ' => ' + this.notation;
-    }
-}
 
 export type Move = ChessJsMove & {
     next: Move | null;
@@ -157,18 +141,13 @@ export class History {
         previous: Move | null = null,
         sloppy = true
     ): Move | null {
-        if (!previous) {
-            if (this.moves.length > 0) {
-                previous = this.moves[this.moves.length - 1];
-            }
-        }
-        const chess = new Chess(this.setUpFen ? this.setUpFen : undefined);
+        const chess = new Chess();
         if (previous) {
-            const historyToMove = this.historyToMove(previous);
-            for (const moveInHistory of historyToMove) {
-                chess.move(moveInHistory);
-            }
+            chess.load(previous.fen);
+        } else if (this.setUpFen) {
+            chess.load(this.setUpFen);
         }
+
         try {
             const chessJsMove = chess.move(notation, { strict: !sloppy });
             if (chessJsMove) {
@@ -185,19 +164,13 @@ export class History {
         previous: Move | null = null,
         sloppy = true
     ) {
-        if (!previous) {
-            if (this.moves.length > 0) {
-                previous = this.moves[this.moves.length - 1];
-            }
-        }
         const move = this.validateMove(notation, previous, sloppy);
         if (!move) {
             throw new Error('invalid move');
         }
+
         move.previous = previous;
         if (previous) {
-            move.ply = previous.ply + 1;
-            move.uci = move.from + move.to + (move.promotion ? move.promotion : '');
             if (previous.next) {
                 previous.next.variations.push([]);
                 move.variation = previous.next.variations[previous.next.variations.length - 1];
@@ -207,9 +180,12 @@ export class History {
                 move.variation = previous.variation;
                 previous.variation.push(move);
             }
+        } else if (this.moves.length > 0) {
+            this.moves[0].variations.push([]);
+            move.variation = this.moves[0].variations[this.moves[0].variations.length - 1];
+            move.variation.push(move);
         } else {
             move.variation = this.moves;
-            move.ply = 1;
             this.moves.push(move);
         }
         return move;
