@@ -1,8 +1,3 @@
-/**
- * Author and copyright: Stefan Haack (https://shaack.com)
- * Repository: https://github.com/shaack/cm-chess
- * License: MIT, see file 'LICENSE'
- */
 import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece, Move as ChessJsMove } from 'chess.js';
 
 import { Move } from './History';
@@ -75,13 +70,13 @@ interface ChessProps {
 export class Chess {
     pgn: Pgn;
     observers: Observer[];
-    currentMove: Move | null;
+    _currentMove: Move | null;
     chessjs: ChessJs;
 
     constructor(props: ChessProps | string = FEN.start) {
         this.observers = [];
         this.pgn = new Pgn();
-        this.currentMove = null;
+        this._currentMove = null;
         this.chessjs = new ChessJs();
 
         if (typeof props === 'string') {
@@ -102,7 +97,7 @@ export class Chess {
      * @param move The move to set the currentMove to. If non-null, it must exist in the pgn history.
      */
     seek(move: Move | null) {
-        this.currentMove = move;
+        this._currentMove = move;
         if (move) {
             this.chessjs.load(move.fen);
         } else {
@@ -111,10 +106,83 @@ export class Chess {
     }
 
     /**
+     * Gets the current Move.
+     * @returns The current Move or null if none have been made.
+     */
+    currentMove(): Move | null {
+        return this._currentMove;
+    }
+
+    /**
+     * Returns the next mainline Move from the provided Move.
+     * @param move The move to get the next move from. Defaults to the current move.
+     */
+    nextMove(move = this._currentMove): Move | null {
+        if (!move) {
+            if (this.pgn.history.moves.length === 0) {
+                return null;
+            }
+            return this.pgn.history.moves[0];
+        }
+        return move.next;
+    }
+
+    /**
+     * Returns the previous Move from the provided move.
+     * @param move The move to get the previous Move from. Defaults to the current move.
+     */
+    previousMove(move = this._currentMove): Move | null {
+        if (!move) {
+            return null;
+        }
+        return move.previous;
+    }
+
+    // TODO: isMainline and isVariation don't take promotion into account.
+
+    /**
+     * Returns whether the provided candidate move is the mainline continuation from the provided Move.
+     * @param orig The origin square for the candidate move.
+     * @param dest The destination square for the candidate move.
+     * @param move The Move to check from. Defaults to the current Move.
+     * @returns True if the provided candidate move is the mainline continuation from `move`.
+     */
+    isMainline(orig: string, dest: string, move = this._currentMove): boolean {
+        const nextMove = this.nextMove(move);
+        if (!nextMove) {
+            return false;
+        }
+        return nextMove.from === orig && nextMove.to === dest;
+    }
+
+    /**
+     * Returns whether the provided candidate move is an existing variation of the provided Move.
+     * @param orig The origin square for the move to check.
+     * @param dest The destination square for the move to check.
+     * @param move The Move to check from. Defaults to the current Move.
+     * @returns True if the provided candidate move exists in the Move's variations.
+     */
+    isVariation(orig: string, dest: string, move = this._currentMove): boolean {
+        if (!move) {
+            return false;
+        }
+        for (const variant of move.variations) {
+            if (variant.length === 0) {
+                continue;
+            }
+            const move = variant[0];
+            if (move.from === orig && move.to === dest) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the FEN of the given move. If no move is provided, then the current move is used. If there is no current move (IE: no moves have been made), the then setup FEN is returned.
      * @param move The move to return the FEN for.
      */
-    fen(move = this.currentMove): string {
+    fen(move = this._currentMove): string {
         if (move) {
             return move.fen;
         } else {
@@ -144,7 +212,7 @@ export class Chess {
      * @param move optional
      * @returns {boolean} true, if the game is over at that move
      */
-    isGameOver(move = this.currentMove): boolean {
+    isGameOver(move = this._currentMove): boolean {
         if (move) {
             return move.gameOver;
         } else {
@@ -156,7 +224,7 @@ export class Chess {
      * @param move optional
      * @returns {boolean} true, if the game is a draw at that move
      */
-    isDraw(move = this.currentMove): boolean {
+    isDraw(move = this._currentMove): boolean {
         if (move) {
             return move.isDraw === true;
         } else {
@@ -168,7 +236,7 @@ export class Chess {
      * @param move optional
      * @returns {boolean} true, if the game is in statemate at that move
      */
-    isStalemate(move = this.currentMove): boolean {
+    isStalemate(move = this._currentMove): boolean {
         if (move) {
             return move.isStalemate === true;
         } else {
@@ -180,7 +248,7 @@ export class Chess {
      * @param move optional
      * @returns {boolean} true, if the game is in draw, because of unsufficiant material at that move
      */
-    isInsufficientMaterial(move = this.currentMove): boolean {
+    isInsufficientMaterial(move = this._currentMove): boolean {
         if (move) {
             return move.isInsufficientMaterial === true;
         } else {
@@ -192,7 +260,7 @@ export class Chess {
      * @param move optional
      * @returns {boolean} true, if the game is in draw, because of threefold repetition at that move
      */
-    isThreefoldRepetition(move = this.currentMove): boolean {
+    isThreefoldRepetition(move = this._currentMove): boolean {
         return move !== null && move.isThreefoldRepetition === true;
     }
 
@@ -200,7 +268,7 @@ export class Chess {
      * @param move optional
      * @returns {boolean} true, if the game is in checkmate at that move
      */
-    isCheckmate(move = this.currentMove): boolean {
+    isCheckmate(move = this._currentMove): boolean {
         if (move) {
             return move.isCheckmate === true;
         } else {
@@ -212,7 +280,7 @@ export class Chess {
      * @param move optional
      * @returns {boolean} true, if the game is in check at that move
      */
-    isCheck(move = this.currentMove): boolean {
+    isCheck(move = this._currentMove): boolean {
         if (move) {
             return move.inCheck === true;
         } else {
@@ -255,7 +323,7 @@ export class Chess {
     load(fen: string) {
         this.chessjs.load(fen);
         this.pgn = new Pgn();
-        this.currentMove = null;
+        this._currentMove = null;
 
         if (fen !== FEN.start) {
             this.pgn.header.tags[TAGS.SetUp] = '1';
@@ -272,7 +340,7 @@ export class Chess {
      */
     loadPgn(pgn: string) {
         this.pgn = new Pgn(pgn);
-        this.currentMove = this.lastMove();
+        this._currentMove = this.lastMove();
         this.chessjs.load(this.fen());
         publishEvent(this.observers, { type: EVENT_TYPE.initialized, pgn: pgn });
     }
@@ -286,7 +354,7 @@ export class Chess {
      */
     move(
         notation: string | { from: string; to: string; promotion?: string },
-        previousMove: Move | null = this.currentMove,
+        previousMove: Move | null = this._currentMove,
         sloppy = true
     ): Move | null {
         try {
@@ -296,8 +364,8 @@ export class Chess {
                 move: moveResult,
                 previousMove: previousMove,
             });
-            this.currentMove = moveResult;
-            this.chessjs.load(this.currentMove.fen);
+            this._currentMove = moveResult;
+            this.chessjs.load(this._currentMove.fen);
             return moveResult;
         } catch (e) {
             publishEvent(this.observers, {
@@ -329,7 +397,7 @@ export class Chess {
      * @param move
      * @returns {ChessJsMove[]}
      */
-    moves(options: MovesOptions = {}, move = this.currentMove): ChessJsMove[] {
+    moves(options: MovesOptions = {}, move = this._currentMove): ChessJsMove[] {
         this.chessjs.load(this.fen(move));
         return this.chessjs.moves({ ...options, verbose: true });
     }
@@ -341,7 +409,7 @@ export class Chess {
      * @param sloppy to allow sloppy SAN
      * @returns the move object or null if not valid
      */
-    validateMove(notation: string, previousMove = this.currentMove, sloppy = true) {
+    validateMove(notation: string, previousMove = this._currentMove, sloppy = true) {
         return this.pgn.history.validateMove(notation, previousMove, sloppy);
     }
 
@@ -395,7 +463,7 @@ export class Chess {
      * @param move
      * @returns {{color: any, type: any}|null}
      */
-    piece(square: Square, move = this.currentMove): { color: any; type: any } | null {
+    piece(square: Square, move = this._currentMove): { color: any; type: any } | null {
         this.chessjs.load(this.fen(move));
         return this.chessjs.get(square);
     }
@@ -418,7 +486,7 @@ export class Chess {
      * Undo a move and all moves after it
      * @param move
      */
-    undo(move = this.currentMove) {
+    undo(move = this._currentMove) {
         // decouple from previous
         if (!move) {
             return;
