@@ -529,17 +529,19 @@ export class Chess {
     }
 
     /**
-     * @returns {'b'|'w'} "b" or "w" the color to move in the main variation
+     * Returns whose turn it is after the provided move.
+     * @param move The move to check the turn of. Defaults to the current move.
+     * @returns Whose turn it is after the provided move.
      */
-    turn(): 'b' | 'w' {
-        let factor = 0;
-        if (this.setUpFen()) {
+    turn(move = this._currentMove): COLOR {
+        if (!move) {
             const fenParts = this.setUpFen().split(' ');
-            if (fenParts[1] === COLOR.black) {
-                factor = 1;
-            }
+            return fenParts[1] as COLOR;
         }
-        return this.pgn.history.moves.length % 2 === factor ? COLOR.white : COLOR.black;
+        if (move.color === COLOR.black) {
+            return COLOR.white;
+        }
+        return COLOR.black;
     }
 
     /**
