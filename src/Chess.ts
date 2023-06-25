@@ -4,6 +4,9 @@ import { Move } from './History';
 import { Pgn } from './Pgn';
 import { TAGS } from './Header';
 
+// Re-exported types from chess.js
+export { SQUARES, Square, PieceSymbol };
+
 export const PIECES = {
     p: { name: 'pawn', value: 1 },
     n: { name: 'knight', value: 3 },
@@ -30,7 +33,7 @@ export enum EVENT_TYPE {
     initialized = 'initialized',
 }
 
-interface Event {
+export interface Event {
     type: EVENT_TYPE;
     fen?: string;
     pgn?: string;
@@ -39,7 +42,7 @@ interface Event {
     notation?: string | { to: string; from: string; promotion?: string };
 }
 
-type Observer = (event: Event) => void;
+export type Observer = (event: Event) => void;
 
 function publishEvent(observers: Observer[], event: Event) {
     for (const observer of observers) {
@@ -49,19 +52,19 @@ function publishEvent(observers: Observer[], event: Event) {
     }
 }
 
-type CandidateMove = string | { from: string; to: string; promotion?: string };
+export type CandidateMove = string | { from: string; to: string; promotion?: string };
 
-interface MovesOptions {
+export interface MovesOptions {
     square?: Square;
     piece?: PieceSymbol;
     verbose?: boolean;
 }
 
-type Piece = ChessJsPiece & {
+export type Piece = ChessJsPiece & {
     square: Square;
 };
 
-interface ChessProps {
+export interface ChessProps {
     fen?: string;
     pgn?: string;
 }
