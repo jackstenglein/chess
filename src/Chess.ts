@@ -313,6 +313,23 @@ export class Chess {
     }
 
     /**
+     * Checks whether the provided move has a NAG in the provided range.
+     * @param minNag The minimum NAG to check for. Inclusive.
+     * @param maxNag The maximum NAG to check for. Exclusive.
+     * @param move The move to check. Defaults to the current move.
+     * @returns True if the move has a NAG in the provided range.
+     */
+    hasNagInRange(minNag: number, maxNag: number, move = this._currentMove): boolean {
+        for (const nag of move?.nags || []) {
+            const nagInt = parseInt(nag.slice(1));
+            if (nagInt >= minNag && nagInt < maxNag) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @jackstenglein/chess.ts uses @jackstenglein/pgn-parser for the history and header. See https://github.com/jackstenglein/pgn-parser
      * @returns {[]} the moves of the game history
      */
