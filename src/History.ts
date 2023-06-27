@@ -70,7 +70,9 @@ export class History {
             const move = this.getMove(ply, pgnMove, chessJsMove, chess);
             if (previousMove) {
                 move.previous = previousMove;
-                previousMove.next = move;
+                if (!previousMove.next) {
+                    previousMove.next = move;
+                }
             }
 
             const parsedVariations = pgnMove.variations;
