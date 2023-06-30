@@ -3,9 +3,11 @@
  * Repository: https://github.com/shaack/cm-pgn
  * License: MIT, see file 'LICENSE'
  */
-import { PgnMove } from '@mliebelt/pgn-types';
+import { PgnMove, GameComment } from '@mliebelt/pgn-types';
 import { Chess, Move as ChessJsMove } from 'chess.js';
 import { Fen } from './Fen';
+
+export { GameComment };
 
 export type Move = ChessJsMove & {
     next: Move | null;
@@ -28,6 +30,7 @@ export type Move = ChessJsMove & {
     nags?: string[];
     commentMove?: string;
     commentAfter?: string;
+    commentDiag?: GameComment;
 };
 
 export class History {
@@ -112,6 +115,7 @@ export class History {
             nags: pgnMove.nag,
             commentMove: pgnMove.commentMove,
             commentAfter: pgnMove.commentAfter,
+            commentDiag: pgnMove.commentDiag,
         };
         return move;
     }
