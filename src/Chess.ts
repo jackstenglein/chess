@@ -326,7 +326,7 @@ export class Chess {
         for (const nag of move?.nags || []) {
             const nagInt = parseInt(nag.slice(1));
             if (nagInt >= minNag && nagInt < maxNag) {
-                return false;
+                return true;
             }
         }
         return false;
