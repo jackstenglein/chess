@@ -351,6 +351,26 @@ export class Chess {
     }
 
     /**
+     * The piece on the provided square.
+     * @param square The square to get the piece for.
+     * @param move The move after which to get the piece. Defaults to the current move.
+     * @returns The piece on the provided square or null if no piece is there.
+     */
+    get(square: Square, move = this._currentMove): Piece | null {
+        if (move) {
+            this.chessjs.load(move.fen);
+        } else {
+            this.chessjs.load(this.setUpFen());
+        }
+
+        const chessJsPiece = this.chessjs.get(square);
+        if (!chessJsPiece) {
+            return null;
+        }
+        return { ...chessJsPiece, square };
+    }
+
+    /**
      * @returns The last move of the main variation or `null` if no move was made.
      */
     lastMove(): Move | null {
