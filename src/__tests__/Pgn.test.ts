@@ -304,6 +304,68 @@ describe('Pgn', () => {
         const pgn = new Pgn(pgnString);
         expect(pgn.render()).toBe(pgnString);
     });
+
+    it('should read PGN with force variation', () => {
+        const pgnString = `[Event "Mar del Plata International-16"]
+[Site "Mar del Plata"]
+[Date "1953.03.28"]
+[Round "12"]
+[White "Najdorf, Miguel"]
+[Black "Gligoric, Svetozar"]
+[Result "0-1"]
+[Annotator "IM Kostya Kavutskiy"]
+[UTCDate "2023.06.24"]
+[UTCTime "23:24:29"]
+[Variant "Standard"]
+[ECO "E98"]
+[Opening "King's Indian Defense: Orthodox Variation, Classical System"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5 Ne7 { The main tabiya of the Classical
+Main Line. With the center closed, the play for both sides has been clarified:
+White's plan is to push c4-c5 and eventually break through on the queenside. 
+Meanwhile Black's plan is to push f7-f5, followed by launching a dangerous
+pawn storm on the kingside. Although the closed character of the position
+allows for lengthy maneuvering, make no mistake, both sides are now engaged in
+a fierce race on opposite sides of the board. } { [%cal Gb2b4,Gc4c5,Gc1e3,Gf6d7,Gf7f5] } 9. Ne1 { White's classic maneuver, bringing the knight to d3 where it will support the
+c5-break and be ready to support the kingside from f2 if needed. White also
+opens up the bishop on e2, stopping any kind of Nh5/Ng4 jumps on the kingside. } { [%cal Ge1d3,Gf2f3] } 9... Nd7! { Black responds with a knight retreat of
+their own, guarding against the c4-c5 break and clearing space for the f-pawn.
+Today this remains the main move, though it should be noted that 9...Ne8 is
+also an option, covering the d6 & c7-squares well in advance. } { [%csl Rc5][%cal Gd7c5,Gf7f5] } 10. Nd3 (10. Be3 f5 11. f3 f4 12. Bf2) 10... f5 11. f3 { A typical reaction, securing the e4-pawn. } (11. f4 { is usually not a great
+move in this kind of position, as it is Black's pieces who are stronger on the
+kingside. Furthermore the exchange exf4 allows Black to open up the powerful
+dark-squared bishop and create an outpost on e5. } 11... exf4 12. Nxf4 Ne5) (11. exf5 { would lead to a more open position, where general wisdom suggests that
+Black should recapture with the g-pawn in order to keep the e4-square under
+control, although there have been many games with Nxf5 as well, where Black
+has done fine to put the knight on d4. }) (11. Bd2! { forcing Black to play Nf6 before committing to f3. The point is that } 11... f4 { can be met with } 12. Bg4! $14 { where it will be hard for Black to avoid the
+exchange of light-squared bishops, a strategic achievement for White. }) 11... f4 { Shutting down the kingside and
+preparing the next phase of the plan: breaking with g5-g4. } { [%cal Gg6g5,Gh7h5,Gd7f6,Ge7g6,Gg5g4] } 12. Bd2 Nf6 { A slight inaccuracy. It was better to keep the knight on d7 longer to slow
+down White's break of c4-c5, and instead advance the kingside. } (12... g5! { where } 13. b4 Nf6 14. c5 h5 { would then transpose to
+the game. }) 13. b4 { Returning the lost tempo, since White could have just
+pushed c4-c5 right away. } (13. c5! g5 14. Rc1 Ng6 { with a typical double-edged position. }) 13... g5 14. c5 h5 { [%cal Gg5g4] } 15. Nf2 { A thematic move, adding another defender to
+the g4-square. } 15... Ng6 { Black now continues to shuffle pieces over to the
+kingside, where a powerful attack is brewing. } 16. Rc1 { Threatening to invade
+with cxd6 and Nb5-c7. } 16... Rf7! { A brilliant concept
+which has since become a standard idea, found by Gligoric over the board.
+Black defends the c7-square in advance and prepares Bf8-Rg7, where the rook
+will support the advance of the g-pawn. In many cases, Black's bishop can use
+the h6-square as well. } { [%cal Gg7f8,Gf7g7,Gg7h6] } 17. cxd6 cxd6 18. a4 { Continuing to advance on the
+queenside. } (18. Nb5? { would allow Black to execute their main break: } 18... g4! { as White cannot take twice on g4: } 19. fxg4 hxg4 20. Nxg4? (20. Bxg4? Bxg4 21. Nxg4 Qb6+ $19 { [%csl Rb5,Rg1][%cal Gb6g1,Gb6b5] }) 20... Bxg4! 21. Bxg4 Qb6+ $19 { [%csl Rb5,Rg1][%cal Gb6b5,Gb6g1] }) 18... Bf8 19. a5 Rg7 20. h3 { Adding another defender to the g4-square. At first glance it seems difficult
+to see how Black will achieve their main break, but Gligoric finds a way: } 20... Nh8! { Another original idea which has since
+become thematic for this kind of position--Black opens up the rook along the
+g-file and reroutes the knight f7-h6/g5 } { [%cal Gh8f7,Gg5g4,Gf7h6,Gf7g5] } 21. Nb5 { With idea
+Qc2 & Nc7. } { [%cal Gd1c2,Gb5c7] } 21... g4! { A temporary pawn sacrifice, as Black begins to open the
+queenside. } (21... Nf7? { would allow } 22. Nc7! $18 { [%cal Gc7a8,Gc7e6] }) (21... a6 22. Na3 { and now play } 22... g4 $132) 22. fxg4 hxg4 23. hxg4 (23. Nxg4? Bxg4! 24. hxg4 a6 25. Nc3 Nf7 $40 { [%cal Gg7h7,Gf7g5] }) 23... a6! { Kicking the knight back. } (23... Nf7?! { would allow } 24. Nc7 Rb8 25. Ne6! $14 { forcing Black to give up the important light-squared bishop. }) 24. Na3 { [%cal Ga3c4,Gc4b6] } 24... Bd7! { Saving the bishop in view of the threat
+Nc4-b6. } 25. Nc4 Rc8 26. Nb6 Rxc1 27. Bxc1 Be8! { Keeping the strong bishop
+on the board. } 28. Ba3 Nf7 29. Qc2 Nh6 { Black's attack is nearly decisive now,
+as the g-pawn is falling. } 30. g5 (30. Qc8 { was the best try but after } 30... Qxc8 31. Nxc8 Bb5! 32. Bxb5 axb5 { White will lose both the g- and
+e-pawns. } { [%csl Re4,Rg4] } 33. Na7 Nhxg4 34. Nxg4 Rxg4 35. Nxb5 Nxe4 $19 { with a winning endgame for Black. } { [%cal Ge4g3,Ge5e4] }) 30... Rxg5 31. Rc1 Rg3! 32. Bb2 Nfg4! { Forcing White to give up the light-squared bishop. } { [%cal Gd8h4,Gg4e3] } 33. Nxg4 Nxg4 34. Bxg4 Rxg4 35. Qf2 Bg6 $19 { With
+Black's pieces ready to invade it is just a matter of time before Gligoric's
+attack pays off. } { [%csl Re4][%cal Gg6e4,Gd8e7,Ge7h7] } 36. Rc4 Qe7 37. Bc3 Qh7 38. Qe2 Rh4 39. Kf2 f3! { The final
+break. } 40. Qe3 (40. Qxf3 Rf4 $19) (40. gxf3 Rh2+ $19) (40. Kxf3 Bh5+ $19) 40... Rf4 41. gxf3 Qh2+ 42. Ke1 Qh1+ 43. Ke2 Bh5 44. Kd2 Rxf3 45. Qg5+ Bg7 46. Kc2 Rf2+ 47. Bd2 Qd1+ 48. Kc3 Qa1+ { 0-1 Black wins. } (49. Kd3 Be2+ 50. Ke3 Rf3+ 51. Kxe2 Qf1#) 0-1`;
+
+        new Pgn(pgnString);
+    });
 });
 
 // [Event "Test Exercise Study: Chapter 5"]

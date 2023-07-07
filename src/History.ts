@@ -62,35 +62,44 @@ export class History {
     }
 
     traverse(pgnMoves: PgnMove[], fen: string | null, parent: Move | null = null, ply = 1, sloppy = false): Move[] {
-        const chess = fen ? new Chess(fen) : new Chess();
         const moves: Move[] = [];
-        let previousMove = parent;
 
-        for (const pgnMove of pgnMoves) {
-            const notation = pgnMove.notation.notation;
-            const chessJsMove = chess.move(notation, { strict: !sloppy });
+        try {
+            const chess = fen ? new Chess(fen) : new Chess();
+            let previousMove = parent;
 
-            const move = this.getMove(ply, pgnMove, chessJsMove, chess);
-            if (previousMove) {
-                move.previous = previousMove;
-                if (!previousMove.next) {
-                    previousMove.next = move;
+            for (const pgnMove of pgnMoves) {
+                const notation = pgnMove.notation.notation;
+                const chessJsMove = chess.move(notation, { strict: !sloppy });
+
+                const move = this.getMove(ply, pgnMove, chessJsMove, chess);
+                if (previousMove) {
+                    move.previous = previousMove;
+                    if (!previousMove.next) {
+                        previousMove.next = move;
+                    }
                 }
-            }
 
-            const parsedVariations = pgnMove.variations;
-            if (parsedVariations.length > 0) {
-                const lastFen = moves.length > 0 ? moves[moves.length - 1].fen : fen;
-                for (let parsedVariation of parsedVariations) {
-                    move.variations.push(this.traverse(parsedVariation, lastFen, previousMove, ply, sloppy));
+                const parsedVariations = pgnMove.variations;
+                if (parsedVariations.length > 0) {
+                    const lastFen = moves.length > 0 ? moves[moves.length - 1].fen : fen;
+                    for (let parsedVariation of parsedVariations) {
+                        const variation = this.traverse(parsedVariation, lastFen, previousMove, ply, sloppy);
+                        if (variation.length > 0) {
+                            move.variations.push(variation);
+                        }
+                    }
                 }
-            }
-            move.variation = moves;
-            moves.push(move);
-            previousMove = move;
+                move.variation = moves;
+                moves.push(move);
+                previousMove = move;
 
-            ply++;
+                ply++;
+            }
+        } catch (err) {
+            console.error(err);
         }
+
         return moves;
     }
 
