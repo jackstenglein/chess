@@ -54,8 +54,12 @@ export const TAGS = {
 export class Header {
     tags: Record<string, string> = {};
 
-    constructor(headerString = '') {
+    constructor(pgnString = '') {
         this.clear();
+
+        const lastHeaderElement =
+            pgnString.trim().slice(-1) === ']' ? pgnString.length : pgnString.lastIndexOf(']\n\n') + 1;
+        const headerString = pgnString.substring(0, lastHeaderElement);
         const rows = headerString.match(/\[([^\]]+)]/g);
         if (rows && rows.length > 0) {
             for (let i = 0; i < rows.length; i++) {

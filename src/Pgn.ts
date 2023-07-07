@@ -23,8 +23,7 @@ export class Pgn {
 
         const lastHeaderElement =
             pgnString.trim().slice(-1) === ']' ? pgnString.length : pgnString.lastIndexOf(']\n\n') + 1;
-        const headerString = pgnString.substring(0, lastHeaderElement);
-        this.header = new Header(headerString);
+        this.header = new Header(pgnString);
 
         let moves: PgnMove[] = [];
         const moveText = pgnString.substring(lastHeaderElement);
