@@ -52,7 +52,6 @@ export class History {
                 }
             }
 
-            console.log('initialPly: ', initialPly);
             this.moves = this.traverse(moves, setUpFen, null, initialPly, sloppy);
         }
     }

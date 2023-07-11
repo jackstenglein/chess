@@ -2,7 +2,7 @@
  * @author Stefan Haack (https://shaack.com)
  */
 import { TAGS } from '../Header';
-import { Chess, COLOR, FEN } from '../Chess';
+import { Chess, COLOR, EventType, FEN } from '../Chess';
 
 describe('Chess', function () {
     it('should create empty Chess', () => {
@@ -225,12 +225,15 @@ describe('Chess', function () {
     it('should publish events', function () {
         return new Promise<void>((resolve, reject) => {
             const chess = new Chess();
-            chess.addObserver((event) => {
-                if (event.type === 'legalMove' && event.move?.from === 'e2' && event.move?.to === 'e4') {
-                    resolve();
-                } else {
-                    reject('error event');
-                }
+            chess.addObserver({
+                types: [EventType.LegalMove],
+                handler: (event) => {
+                    if (event.move?.from === 'e2' && event.move?.to === 'e4') {
+                        resolve();
+                    } else {
+                        reject('error event');
+                    }
+                },
             });
             chess.move('e4');
         });

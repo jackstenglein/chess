@@ -26,29 +26,33 @@ export const FEN = {
     start: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
 };
 
-export enum EVENT_TYPE {
-    illegalMove = 'illegalMove',
-    legalMove = 'legalMove',
-    undoMove = 'undoMove',
-    initialized = 'initialized',
+export enum EventType {
+    IllegalMove = 'ILLEGAL_MOVE',
+    LegalMove = 'LEGAL_MOVE',
+    NewVariation = 'NEW_VARIATION',
+    UndoMove = 'UNDO_MOVE',
+    Initialized = 'INITIALIZED',
 }
 
 export interface Event {
-    type: EVENT_TYPE;
+    type: EventType;
     fen?: string;
     pgn?: string;
-    move?: Move;
+    move?: Move | null;
     previousMove?: Move | null;
     notation?: string | { to: string; from: string; promotion?: string };
 }
 
-export type Observer = (event: Event) => void;
+export interface Observer {
+    types: EventType[];
+    handler: (event: Event) => void;
+}
 
 function publishEvent(observers: Observer[], event: Event) {
     for (const observer of observers) {
-        setTimeout(() => {
-            observer(event);
-        });
+        if (observer.types.includes(event.type)) {
+            observer.handler(event);
+        }
     }
 }
 
@@ -103,12 +107,21 @@ export class Chess {
      * @returns The new current Move.
      */
     seek(move: Move | null): Move | null {
-        this._currentMove = move;
         if (move) {
             this.chessjs.load(move.fen);
         } else {
             this.chessjs.load(this.setUpFen());
         }
+
+        publishEvent(this.observers, {
+            type: EventType.LegalMove,
+            fen: this.fen(),
+            move: move,
+            previousMove: this._currentMove,
+            notation: move?.san,
+        });
+
+        this._currentMove = move;
         return move;
     }
 
@@ -393,7 +406,7 @@ export class Chess {
             this.pgn.header.tags[TAGS.SetUp] = '1';
             this.pgn.header.tags[TAGS.FEN] = this.chessjs.fen();
             this.pgn.history.setUpFen = fen;
-            publishEvent(this.observers, { type: EVENT_TYPE.initialized, fen: fen });
+            publishEvent(this.observers, { type: EventType.Initialized, fen: fen });
         }
     }
 
@@ -406,7 +419,7 @@ export class Chess {
         this.pgn = new Pgn(pgn);
         this._currentMove = this.lastMove();
         this.chessjs.load(this.fen());
-        publishEvent(this.observers, { type: EVENT_TYPE.initialized, pgn: pgn });
+        publishEvent(this.observers, { type: EventType.Initialized, pgn: pgn });
     }
 
     /**
@@ -421,7 +434,7 @@ export class Chess {
         const nextMove = this.nextMove(previousMove);
         if (this.candidateMatches(candidate, nextMove)) {
             publishEvent(this.observers, {
-                type: EVENT_TYPE.legalMove,
+                type: EventType.LegalMove,
                 move: nextMove!,
                 previousMove: previousMove,
             });
@@ -431,7 +444,7 @@ export class Chess {
         const existingVariant = this.getVariation(candidate, previousMove);
         if (existingVariant) {
             publishEvent(this.observers, {
-                type: EVENT_TYPE.legalMove,
+                type: EventType.LegalMove,
                 move: existingVariant,
                 previousMove: previousMove,
             });
@@ -442,14 +455,14 @@ export class Chess {
         try {
             const moveResult = this.pgn.history.addMove(candidate, previousMove, sloppy);
             publishEvent(this.observers, {
-                type: EVENT_TYPE.legalMove,
+                type: EventType.NewVariation,
                 move: moveResult,
                 previousMove: previousMove,
             });
             return this.seek(moveResult);
         } catch (e) {
             publishEvent(this.observers, {
-                type: EVENT_TYPE.illegalMove,
+                type: EventType.IllegalMove,
                 notation: candidate,
                 previousMove,
             });
@@ -581,7 +594,7 @@ export class Chess {
             return element.ply === move.ply;
         });
         move.variation = move.variation.splice(index);
-        publishEvent(this.observers, { type: EVENT_TYPE.undoMove, move: move });
+        publishEvent(this.observers, { type: EventType.UndoMove, move: move });
     }
 
     plyCount() {
@@ -598,5 +611,9 @@ export class Chess {
 
     addObserver(observer: Observer) {
         this.observers.push(observer);
+    }
+
+    removeObserver(observer: Observer) {
+        this.observers = this.observers.filter((o) => o !== observer);
     }
 }
