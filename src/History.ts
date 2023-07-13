@@ -7,7 +7,9 @@ import { PgnMove, GameComment } from '@mliebelt/pgn-types';
 import { Chess, Move as ChessJsMove } from 'chess.js';
 import { Fen } from './Fen';
 
-export { GameComment };
+export interface DiagramComment extends GameComment {
+    [key: string]: string | string[] | undefined;
+}
 
 export type Move = ChessJsMove & {
     next: Move | null;
@@ -30,8 +32,29 @@ export type Move = ChessJsMove & {
     nags?: string[];
     commentMove?: string;
     commentAfter?: string;
-    commentDiag?: GameComment;
+    commentDiag?: DiagramComment;
 };
+
+export function renderCommands(commentDiag: DiagramComment): string {
+    const { colorArrows, colorFields, comment, ...rest } = commentDiag;
+
+    if (comment && Object.keys(commentDiag).length === 1) {
+        return '';
+    }
+
+    let result = '{ ';
+
+    if (colorArrows) {
+        result += `[%cal ${colorArrows.join(',')}]`;
+    }
+    if (colorFields) {
+    }
+
+    Object.entries(rest).forEach(([k, v]) => (result += `[%${k} ${v}]`));
+
+    result += ' } ';
+    return result;
+}
 
 export class History {
     setUpFen: string | null;
@@ -209,6 +232,11 @@ export class History {
         const renderVariation = (variation: Move[], needReminder = false) => {
             let result = '';
             for (let move of variation) {
+                if (renderComments && move.commentMove) {
+                    result += '{' + move.commentMove + '} ';
+                    needReminder = true;
+                }
+
                 if (move.ply % 2 === 1) {
                     result += Math.floor(move.ply / 2) + 1 + '. ';
                 } else if (result.length === 0 || needReminder) {
@@ -222,14 +250,13 @@ export class History {
                     result += move.nags.join(' ') + ' ';
                 }
 
-                if (renderComments && move.commentMove) {
-                    result += '{' + move.commentMove + '} ';
-                    needReminder = true;
-                }
-
                 if (renderComments && move.commentAfter) {
                     result += '{' + move.commentAfter + '} ';
                     needReminder = true;
+                }
+
+                if (renderComments && move.commentDiag) {
+                    result += renderCommands(move.commentDiag);
                 }
 
                 if (move.variations.length > 0) {

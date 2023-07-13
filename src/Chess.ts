@@ -21,17 +21,24 @@ export enum COLOR {
     black = 'b',
 }
 
+export enum CommentType {
+    Before = 'BEFORE',
+    After = 'AFTER',
+}
+
 export const FEN = {
     empty: '8/8/8/8/8/8/8/8 w - - 0 1',
     start: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
 };
 
 export enum EventType {
+    Initialized = 'INITIALIZED',
     IllegalMove = 'ILLEGAL_MOVE',
     LegalMove = 'LEGAL_MOVE',
     NewVariation = 'NEW_VARIATION',
     UndoMove = 'UNDO_MOVE',
-    Initialized = 'INITIALIZED',
+    UpdateComment = 'UPDATE_COMMENT',
+    UpdateCommand = 'UPDATE_COMMAND',
 }
 
 export interface Event {
@@ -41,6 +48,10 @@ export interface Event {
     move?: Move | null;
     previousMove?: Move | null;
     notation?: string | { to: string; from: string; promotion?: string };
+    commentType?: CommentType;
+    commentText?: string;
+    commandName?: string;
+    commandValue?: string;
 }
 
 export interface Observer {
@@ -615,5 +626,33 @@ export class Chess {
 
     removeObserver(observer: Observer) {
         this.observers = this.observers.filter((o) => o !== observer);
+    }
+
+    setComment(text: string, type: CommentType = CommentType.After, move = this._currentMove) {
+        if (move === null) {
+            this.pgn.gameComment = text;
+        } else if (type === CommentType.Before) {
+            move.commentMove = text;
+        } else if (type === CommentType.After) {
+            move.commentAfter = text;
+        }
+
+        publishEvent(this.observers, { type: EventType.UpdateComment, move, commentType: type, commentText: text });
+    }
+
+    setCommand(name: string, value: string, move = this._currentMove) {
+        if (move !== null) {
+            move.commentDiag = {
+                ...move.commentDiag,
+                [name]: value,
+            };
+
+            publishEvent(this.observers, {
+                type: EventType.UpdateCommand,
+                move,
+                commandName: name,
+                commandValue: value,
+            });
+        }
     }
 }
