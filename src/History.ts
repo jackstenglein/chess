@@ -48,9 +48,14 @@ export function renderCommands(commentDiag: DiagramComment): string {
         result += `[%cal ${colorArrows.join(',')}]`;
     }
     if (colorFields) {
+        result += `[%csl ${colorFields.join(',')}]`;
     }
 
-    Object.entries(rest).forEach(([k, v]) => (result += `[%${k} ${v}]`));
+    Object.entries(rest).forEach(([k, v]) => {
+        if (v) {
+            result += `[%${k} ${v}]`;
+        }
+    });
 
     result += ' } ';
     return result;
