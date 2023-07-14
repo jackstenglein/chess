@@ -39,6 +39,7 @@ export enum EventType {
     UndoMove = 'UNDO_MOVE',
     UpdateComment = 'UPDATE_COMMENT',
     UpdateCommand = 'UPDATE_COMMAND',
+    UpdateNags = 'UPDATE_NAGS',
 }
 
 export interface Event {
@@ -628,6 +629,16 @@ export class Chess {
         this.observers = this.observers.filter((o) => o !== observer);
     }
 
+    getComment(type: CommentType = CommentType.After, move = this._currentMove): string {
+        if (!move) {
+            return this.pgn.gameComment;
+        }
+        if (type === CommentType.Before) {
+            return move.commentMove || '';
+        }
+        return move.commentAfter || '';
+    }
+
     setComment(text: string, type: CommentType = CommentType.After, move = this._currentMove) {
         if (move === null) {
             this.pgn.gameComment = text;
@@ -652,6 +663,16 @@ export class Chess {
                 move,
                 commandName: name,
                 commandValue: value,
+            });
+        }
+    }
+
+    setNags(nags?: string[], move = this._currentMove) {
+        if (move !== null) {
+            move.nags = nags;
+            publishEvent(this.observers, {
+                type: EventType.UpdateNags,
+                move,
             });
         }
     }
