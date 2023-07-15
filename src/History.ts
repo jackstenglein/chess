@@ -61,6 +61,61 @@ export function renderCommands(commentDiag: DiagramComment): string {
     return result;
 }
 
+function getColorFromChesscomKeypress(keypress: string | undefined) {
+    switch (keypress) {
+        case 'shift':
+            return 'G';
+        case 'ctrl':
+            return 'Y';
+        case 'alt':
+            return 'B';
+        case 'none':
+            return 'R';
+    }
+    return 'R';
+}
+
+function convertChesscomHighlights(commentDiag?: DiagramComment): DiagramComment | undefined {
+    if (!commentDiag || (!commentDiag.c_highlight && !commentDiag.c_arrow)) {
+        return commentDiag;
+    }
+
+    if (!commentDiag.colorFields) {
+        commentDiag.colorFields = [];
+    }
+    if (!commentDiag.colorArrows) {
+        commentDiag.colorArrows = [];
+    }
+
+    const highlight = commentDiag.c_highlight;
+    if (highlight && typeof highlight === 'string') {
+        const highlights = highlight.split(',');
+        for (const h of highlights) {
+            const tokens = h.split(';');
+            const square = tokens[0];
+            const color = getColorFromChesscomKeypress(tokens[2]);
+            if (square && color) {
+                commentDiag.colorFields.push(`${color}${square}`);
+            }
+        }
+    }
+
+    const arrow = commentDiag.c_arrow;
+    if (arrow && typeof arrow === 'string') {
+        const arrows = arrow.split(',');
+        for (const a of arrows) {
+            const tokens = a.split(';');
+            const squares = tokens[0];
+            const color = getColorFromChesscomKeypress(tokens[2]);
+            if (squares && color) {
+                commentDiag.colorArrows.push(`${color}${squares}`);
+            }
+        }
+    }
+
+    return commentDiag;
+}
+
 export class History {
     setUpFen: string | null;
     moves: Move[] = [];
@@ -151,7 +206,7 @@ export class History {
             nags: pgnMove.nag,
             commentMove: pgnMove.commentMove,
             commentAfter: pgnMove.commentAfter,
-            commentDiag: pgnMove.commentDiag,
+            commentDiag: convertChesscomHighlights(pgnMove.commentDiag),
         };
         return move;
     }
