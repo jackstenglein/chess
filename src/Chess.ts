@@ -40,6 +40,7 @@ export enum EventType {
     UpdateComment = 'UPDATE_COMMENT',
     UpdateCommand = 'UPDATE_COMMAND',
     UpdateNags = 'UPDATE_NAGS',
+    UpdateDrawables = 'UPDATE_DRAWABLES',
 }
 
 export interface Event {
@@ -672,6 +673,21 @@ export class Chess {
             move.nags = nags;
             publishEvent(this.observers, {
                 type: EventType.UpdateNags,
+                move,
+            });
+        }
+    }
+
+    setDrawables(arrows: string[] | undefined, squares: string[] | undefined, move = this._currentMove) {
+        if (move !== null) {
+            move.commentDiag = {
+                ...move.commentDiag,
+                colorArrows: arrows,
+                colorFields: squares,
+            };
+
+            publishEvent(this.observers, {
+                type: EventType.UpdateDrawables,
                 move,
             });
         }
