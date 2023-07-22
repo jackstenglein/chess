@@ -58,7 +58,6 @@ export interface Event {
     commentText?: string;
     commandName?: string;
     commandValue?: string;
-    newIndex?: number;
 }
 
 export interface Observer {
@@ -783,20 +782,35 @@ export class Chess {
             return;
         }
         if (variantIndex === 0) {
-            // TODO
-            return;
-        }
+            // Fix variation and next for previous moves
+            const parentVariation = variantParent.variation;
+            const parentIndex = parentVariation.findIndex((m) => m === variantParent);
+            variantParent.variation = parentVariation.splice(parentIndex);
+            parentVariation.push(...move.variation);
+            variantRoot.previous!.next = variantRoot;
 
-        const temp = variantParent.variations[variantIndex - 1];
-        variantParent.variations[variantIndex - 1] = variantParent.variations[variantIndex];
-        variantParent.variations[variantIndex] = temp;
+            // Fix variations field for both variations
+            move.variations = [variantParent.variation, ...variantParent.variations.slice(1)];
+            variantParent.variations = [];
+
+            // Fix variation field for both variations
+            for (let i = variantRoot.variation.length - 1; i >= 0; i--) {
+                variantRoot.variation[i].variation = variantRoot.previous!.variation;
+            }
+            for (const m of variantParent.variation) {
+                m.variation = variantParent.variation;
+            }
+        } else {
+            const temp = variantParent.variations[variantIndex - 1];
+            variantParent.variations[variantIndex - 1] = variantParent.variations[variantIndex];
+            variantParent.variations[variantIndex] = temp;
+        }
 
         publishEvent(this.observers, {
             type: EventType.PromoteVariation,
             move,
             variantRoot,
             variantParent,
-            newIndex: variantIndex - 1,
         });
     }
 }
