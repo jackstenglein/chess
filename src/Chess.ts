@@ -36,7 +36,7 @@ export enum EventType {
     IllegalMove = 'ILLEGAL_MOVE',
     LegalMove = 'LEGAL_MOVE',
     NewVariation = 'NEW_VARIATION',
-    UndoMove = 'UNDO_MOVE',
+    DeleteMove = 'DELETE_MOVE',
     UpdateComment = 'UPDATE_COMMENT',
     UpdateCommand = 'UPDATE_COMMAND',
     UpdateNags = 'UPDATE_NAGS',
@@ -342,6 +342,18 @@ export class Chess {
     }
 
     /**
+     * Checks whether the provided move is in the mainline.
+     * @param move The move to check. Defaults to the current move.
+     * @returns {boolean} True if the move is in the mainline.
+     */
+    isInMainline(move = this._currentMove): boolean {
+        if (!move) {
+            return false;
+        }
+        return move.variation === this.pgn.history.moves;
+    }
+
+    /**
      * Checks whether the provided move has a NAG in the provided range.
      * @param minNag The minimum NAG to check for. Inclusive.
      * @param maxNag The maximum NAG to check for. Exclusive.
@@ -591,23 +603,21 @@ export class Chess {
     }
 
     /**
-     * Undo a move and all moves after it
-     * @param move
+     * Delete a move and all moves after it
+     * @param move The move to delete from. Defaults to the current move.
      */
-    undo(move = this._currentMove) {
-        // decouple from previous
+    delete(move = this._currentMove) {
         if (!move) {
             return;
         }
         if (move.previous) {
             move.previous.next = null;
         }
-        // splice all next moves
         const index = move.variation.findIndex((element) => {
             return element.ply === move.ply;
         });
         move.variation = move.variation.splice(index);
-        publishEvent(this.observers, { type: EventType.UndoMove, move: move });
+        publishEvent(this.observers, { type: EventType.DeleteMove, move: move, previousMove: move.previous });
     }
 
     plyCount() {

@@ -167,7 +167,7 @@ describe('Chess', function () {
 1-0`;
         chess.loadPgn(pgn);
         expect(chess.history().length).toBe(9);
-        chess.undo();
+        chess.delete();
         expect(chess.history().length).toBe(8);
     });
 
@@ -179,7 +179,7 @@ describe('Chess', function () {
 1. Qc5+ Kd3 2. Qc2+ Kd4 3. Qd2+ Bd3 4. Qe3+ Kxe3 (4... Kc3 5. Qc1+ Kb3 6. Qa3+ Kc4 7. Qb4+ Kd5 8. Qc5#) 5. Bc5#
 1-0`;
         chess.loadPgn(pgn);
-        chess.undo(chess.history()[5]);
+        chess.delete(chess.history()[5]);
         // console.log(chess.history());
         expect(chess.history().length).toBe(5);
         expect(chess.plyCount()).toBe(5);
