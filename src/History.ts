@@ -44,10 +44,10 @@ export function renderCommands(commentDiag: DiagramComment): string {
 
     let result = '{ ';
 
-    if (colorArrows) {
+    if (colorArrows && colorArrows.length > 0) {
         result += `[%cal ${colorArrows.join(',')}]`;
     }
-    if (colorFields) {
+    if (colorFields && colorFields.length > 0) {
         result += `[%csl ${colorFields.join(',')}]`;
     }
 
