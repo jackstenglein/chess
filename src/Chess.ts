@@ -604,6 +604,40 @@ export class Chess {
     }
 
     /**
+     * Checks whether a move is a descendant of another move.
+     * @param parent The potential parent to check.
+     * @param move The move to check. Defaults to the current move.
+     */
+    isDescendant(parent: Move, move = this._currentMove): boolean {
+        if (!move) {
+            return false;
+        }
+        if (parent === move) {
+            return true;
+        }
+        if (move.ply < parent.ply) {
+            return false;
+        }
+        if (this.isInMainline(parent)) {
+            return true;
+        }
+        if (this.isInMainline(move)) {
+            return false;
+        }
+
+        const parentRoot = parent.variation;
+        let moveRoot: Move[] | undefined = move.variation;
+        do {
+            if (moveRoot === parentRoot) {
+                return true;
+            }
+            moveRoot = moveRoot[0].previous?.variation;
+        } while (moveRoot && !this.isInMainline(moveRoot[0]));
+
+        return false;
+    }
+
+    /**
      * Delete a move and all moves after it
      * @param move The move to delete from. Defaults to the current move.
      */
@@ -631,7 +665,7 @@ export class Chess {
             mainlineMove: move.previous?.next,
         });
 
-        if (move === this._currentMove) {
+        if (this.isDescendant(move)) {
             this.seek(move.previous);
         }
     }
