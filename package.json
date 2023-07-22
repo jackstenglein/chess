@@ -1,6 +1,6 @@
 {
     "name": "@jackstenglein/chess",
-    "version": "1.0.37",
+    "version": "1.0.38",
     "description": "Built on top of chess.js and can handle variations (tree-structured move history)",
     "main": "dist/cjs/index.js",
     "module": "dist/esm/index.js",
