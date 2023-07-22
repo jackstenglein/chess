@@ -49,6 +49,7 @@ export interface Event {
     pgn?: string;
     move?: Move | null;
     previousMove?: Move | null;
+    mainlineMove?: Move | null;
     notation?: string | { to: string; from: string; promotion?: string };
     commentType?: CommentType;
     commentText?: string;
@@ -610,14 +611,29 @@ export class Chess {
         if (!move) {
             return;
         }
-        if (move.previous) {
+        if (move.previous?.next === move) {
             move.previous.next = null;
         }
+
         const index = move.variation.findIndex((element) => {
             return element.ply === move.ply;
         });
         move.variation = move.variation.splice(index);
-        publishEvent(this.observers, { type: EventType.DeleteMove, move: move, previousMove: move.previous });
+
+        if (index === 0 && move.previous?.next) {
+            move.previous.next.variations = move.previous.next.variations.filter((v) => v.length > 0);
+        }
+
+        if (move === this._currentMove) {
+            this._currentMove = move.previous;
+        }
+
+        publishEvent(this.observers, {
+            type: EventType.DeleteMove,
+            move: move,
+            previousMove: move.previous,
+            mainlineMove: move.previous?.next,
+        });
     }
 
     plyCount() {
