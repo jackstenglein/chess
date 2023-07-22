@@ -790,7 +790,7 @@ export class Chess {
             variantRoot.previous!.next = variantRoot;
 
             // Fix variations field for both variations
-            move.variations = [variantParent.variation, ...variantParent.variations.slice(1)];
+            variantRoot.variations = [variantParent.variation, ...variantParent.variations.slice(1)];
             variantParent.variations = [];
 
             // Fix variation field for both variations
