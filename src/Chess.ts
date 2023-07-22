@@ -41,6 +41,7 @@ export enum EventType {
     UpdateCommand = 'UPDATE_COMMAND',
     UpdateNags = 'UPDATE_NAGS',
     UpdateDrawables = 'UPDATE_DRAWABLES',
+    PromoteVariation = 'PROMOTE_VARIATION',
 }
 
 export interface Event {
@@ -50,11 +51,14 @@ export interface Event {
     move?: Move | null;
     previousMove?: Move | null;
     mainlineMove?: Move | null;
+    variantRoot?: Move | null;
+    variantParent?: Move | null;
     notation?: string | { to: string; from: string; promotion?: string };
     commentType?: CommentType;
     commentText?: string;
     commandName?: string;
     commandValue?: string;
+    newIndex?: number;
 }
 
 export interface Observer {
@@ -609,25 +613,19 @@ export class Chess {
      * @param move The move to check. Defaults to the current move.
      */
     isDescendant(parent: Move, move = this._currentMove): boolean {
-        console.log('isDescendant: ', parent, move);
         if (!move) {
-            console.log('Not a descendant because move is falsy');
             return false;
         }
         if (parent === move) {
-            console.log('Is a descendant because parent and move are equal');
             return true;
         }
         if (move.ply < parent.ply) {
-            console.log('Not a descendant because move ply is less than parent ply');
             return false;
         }
         if (this.isInMainline(parent)) {
-            console.log('Is a descendant because parent in mainline');
             return true;
         }
         if (this.isInMainline(move)) {
-            console.log('Not a descendant because move in mainline');
             return false;
         }
 
@@ -635,13 +633,11 @@ export class Chess {
         let moveRoot: Move[] | undefined = move.variation;
         do {
             if (moveRoot === parentRoot) {
-                console.log('Is a descendant because moveRoot === parentRoot');
                 return true;
             }
             moveRoot = moveRoot[0].previous?.variation;
         } while (moveRoot && !this.isInMainline(moveRoot[0]));
 
-        console.log('Not a descendant because moveRoot !== parentRoot');
         return false;
     }
 
@@ -760,5 +756,44 @@ export class Chess {
                 move,
             });
         }
+    }
+
+    canPromoteVariation(move = this._currentMove): boolean {
+        return (
+            move !== null &&
+            !this.isInMainline(move) &&
+            move.variation[0].previous !== null &&
+            !this.isInMainline(move.variation[0].previous)
+        );
+    }
+
+    promoteVariation(move = this._currentMove) {
+        if (!move || !this.canPromoteVariation(move)) {
+            return;
+        }
+
+        const variantRoot = move.variation[0];
+        const variantParent = variantRoot.previous?.next;
+        if (!variantParent) {
+            return;
+        }
+
+        const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantParent);
+        if (variantIndex === 0) {
+            // TODO
+            return;
+        }
+
+        const temp = variantParent.variations[variantIndex - 1];
+        variantParent.variations[variantIndex - 1] = variantParent.variations[variantIndex];
+        variantParent.variations[variantIndex] = temp;
+
+        publishEvent(this.observers, {
+            type: EventType.PromoteVariation,
+            move,
+            variantRoot,
+            variantParent,
+            newIndex: variantIndex - 1,
+        });
     }
 }
