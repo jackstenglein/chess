@@ -778,7 +778,10 @@ export class Chess {
             return;
         }
 
-        const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantParent);
+        const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantRoot);
+        if (variantIndex < 0) {
+            return;
+        }
         if (variantIndex === 0) {
             // TODO
             return;
