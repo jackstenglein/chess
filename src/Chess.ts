@@ -624,16 +624,16 @@ export class Chess {
             move.previous.next.variations = move.previous.next.variations.filter((v) => v.length > 0);
         }
 
-        if (move === this._currentMove) {
-            this._currentMove = move.previous;
-        }
-
         publishEvent(this.observers, {
             type: EventType.DeleteMove,
             move: move,
             previousMove: move.previous,
             mainlineMove: move.previous?.next,
         });
+
+        if (move === this._currentMove) {
+            this.seek(move.previous);
+        }
     }
 
     plyCount() {
