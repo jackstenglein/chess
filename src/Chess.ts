@@ -660,7 +660,6 @@ export class Chess {
         const index = move.variation.findIndex((element) => {
             return element.ply === move.ply;
         });
-        move.variation = move.variation.splice(index);
 
         if (index === 0 && move.previous?.next) {
             move.previous.next.variations = move.previous.next.variations.filter((v) => v.length > 0);
