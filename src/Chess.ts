@@ -609,19 +609,25 @@ export class Chess {
      * @param move The move to check. Defaults to the current move.
      */
     isDescendant(parent: Move, move = this._currentMove): boolean {
+        console.log('isDescendant: ', parent, move);
         if (!move) {
+            console.log('Not a descendant because move is falsy');
             return false;
         }
         if (parent === move) {
+            console.log('Is a descendant because parent and move are equal');
             return true;
         }
         if (move.ply < parent.ply) {
+            console.log('Not a descendant because move ply is less than parent ply');
             return false;
         }
         if (this.isInMainline(parent)) {
+            console.log('Is a descendant because parent in mainline');
             return true;
         }
         if (this.isInMainline(move)) {
+            console.log('Not a descendant because move in mainline');
             return false;
         }
 
@@ -629,11 +635,13 @@ export class Chess {
         let moveRoot: Move[] | undefined = move.variation;
         do {
             if (moveRoot === parentRoot) {
+                console.log('Is a descendant because moveRoot === parentRoot');
                 return true;
             }
             moveRoot = moveRoot[0].previous?.variation;
         } while (moveRoot && !this.isInMainline(moveRoot[0]));
 
+        console.log('Not a descendant because moveRoot !== parentRoot');
         return false;
     }
 
@@ -658,16 +666,17 @@ export class Chess {
             move.previous.next.variations = move.previous.next.variations.filter((v) => v.length > 0);
         }
 
+        console.log('Checking if current move is descendant');
+        if (this.isDescendant(move)) {
+            this.seek(move.previous);
+        }
+
         publishEvent(this.observers, {
             type: EventType.DeleteMove,
             move: move,
             previousMove: move.previous,
             mainlineMove: move.previous?.next,
         });
-
-        if (this.isDescendant(move)) {
-            this.seek(move.previous);
-        }
     }
 
     plyCount() {
