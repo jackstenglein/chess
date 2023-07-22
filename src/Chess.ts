@@ -42,6 +42,7 @@ export enum EventType {
     UpdateNags = 'UPDATE_NAGS',
     UpdateDrawables = 'UPDATE_DRAWABLES',
     PromoteVariation = 'PROMOTE_VARIATION',
+    DemoteVariation = 'DEMOTE_VARIATION',
 }
 
 export interface Event {
@@ -808,6 +809,55 @@ export class Chess {
 
         publishEvent(this.observers, {
             type: EventType.PromoteVariation,
+            move,
+            variantRoot,
+            variantParent,
+        });
+    }
+
+    canDemoteVariation(move = this._currentMove): boolean {
+        if (!move) {
+            return false;
+        }
+        if (move.variations.length > 0) {
+            return true;
+        }
+
+        const variantParent = move.variation[0].previous?.next;
+        if (!variantParent) {
+            return false;
+        }
+
+        const variantIndex = variantParent.variations.findIndex((v) => v[0] === move.variation[0]);
+        return variantIndex < variantParent.variations.length - 1;
+    }
+
+    demoteVariation(move = this._currentMove) {
+        if (!move || !this.canDemoteVariation(move)) {
+            return;
+        }
+
+        if (move.variations.length > 0) {
+            // TODO
+            return;
+        }
+
+        const variantRoot = move.variation[0];
+        const variantParent = variantRoot.previous?.next;
+        if (!variantParent) {
+            return;
+        }
+
+        const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantRoot);
+        if (variantIndex < 0) {
+            return;
+        }
+        const temp = variantParent.variations[variantIndex + 1];
+        variantParent.variations[variantIndex + 1] = variantParent.variations[variantIndex];
+        variantParent.variations[variantIndex] = temp;
+
+        publishEvent(this.observers, {
+            type: EventType.DemoteVariation,
             move,
             variantRoot,
             variantParent,
