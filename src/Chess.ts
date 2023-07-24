@@ -756,29 +756,38 @@ export class Chess {
         }
     }
 
-    canPromoteVariation(move = this._currentMove, intoMainline = false): boolean {
+    getVariantParent(move = this._currentMove): Move | null {
         if (!move) {
-            return false;
+            return null;
         }
         if (this.isInMainline(move)) {
-            return false;
-        }
-
-        if (!move.variation[0].previous) {
-            return false;
-        }
-        if (intoMainline) {
-            return true;
+            return null;
         }
 
         const variantRoot = move.variation[0];
-        const variantParent = variantRoot.previous?.next;
+        if (!variantRoot.previous) {
+            return this.firstMove();
+        }
+        return variantRoot.previous.next;
+    }
+
+    canPromoteVariation(move = this._currentMove, intoMainline = false): boolean {
+        const variantParent = this.getVariantParent(move);
         if (!variantParent) {
             return false;
         }
 
+        if (intoMainline) {
+            return true;
+        }
+
+        if (!this.isInMainline(variantParent)) {
+            return true;
+        }
+
+        const variantRoot = move?.variation[0];
         const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantRoot);
-        return variantIndex >= 0;
+        return variantIndex >= 1;
     }
 
     promoteVariation(move = this._currentMove, intoMainline = false) {
@@ -787,7 +796,7 @@ export class Chess {
         }
 
         let nextVariantRoot: Move | undefined = move.variation[0];
-        let nextVariantParent = nextVariantRoot.previous?.next;
+        let nextVariantParent: Move | null | undefined = this.getVariantParent(move);
         if (!nextVariantParent) {
             return;
         }
@@ -809,7 +818,9 @@ export class Chess {
                 const parentIndex = parentVariation.findIndex((m) => m === variantParent);
                 variantParent.variation = parentVariation.splice(parentIndex);
                 parentVariation.push(...move.variation);
-                variantRoot.previous!.next = variantRoot;
+                if (variantRoot.previous) {
+                    variantRoot.previous.next = variantRoot;
+                }
 
                 // Fix variations field for both variations
                 variantRoot.variations = [
@@ -820,9 +831,12 @@ export class Chess {
                 variantParent.variations = [];
 
                 // Fix variation field for both variations
-                for (let i = variantRoot.variation.length - 1; i >= 0; i--) {
-                    variantRoot.variation[i].variation = variantRoot.previous!.variation;
+                if (variantRoot.previous) {
+                    for (let i = variantRoot.variation.length - 1; i >= 0; i--) {
+                        variantRoot.variation[i].variation = variantRoot.previous.variation;
+                    }
                 }
+
                 for (const m of variantParent.variation) {
                     m.variation = variantParent.variation;
                 }
@@ -833,7 +847,7 @@ export class Chess {
             }
 
             nextVariantRoot = variantRoot.previous?.variation[0];
-            nextVariantParent = nextVariantRoot?.previous?.next;
+            nextVariantParent = this.getVariantParent(nextVariantRoot);
         } while (intoMainline && nextVariantRoot && nextVariantParent && !this.isInMainline(nextVariantRoot));
 
         publishEvent(this.observers, {

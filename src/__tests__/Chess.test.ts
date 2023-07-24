@@ -334,4 +334,58 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         expect(nf3?.variations[0][0].san).toBe('d4');
         expect(d4?.variations).toHaveLength(0);
     });
+
+    it('should prevent promotion of first variant', function () {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        const e6 = chess.move('e6');
+        chess.seek(e4);
+        const e5 = chess.move('e5');
+        chess.seek(e4);
+        const c6 = chess.move('c6');
+
+        expect(chess.canPromoteVariation(e6)).toBe(false);
+        expect(chess.canPromoteVariation(e5)).toBe(false);
+        expect(chess.canPromoteVariation(c6)).toBe(true);
+    });
+
+    it('should allow promotion of first variant to mainline', function () {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        chess.move('e6');
+        chess.seek(e4);
+        const e5 = chess.move('e5');
+        chess.seek(e4);
+        chess.move('c6');
+
+        expect(chess.canPromoteVariation(e5, true)).toBe(true);
+    });
+
+    it('should allow promotion of variant of first move', function () {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        chess.move('e6');
+        chess.seek(null);
+        const d4 = chess.move('d4');
+
+        expect(chess.canPromoteVariation(e4, true)).toBe(false);
+        expect(chess.canPromoteVariation(d4)).toBe(false);
+        expect(chess.canPromoteVariation(d4, true)).toBe(true);
+    });
+
+    it('should perform promotion of variant of first move', function () {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        chess.move('e6');
+        chess.seek(null);
+        const d4 = chess.move('d4');
+        chess.seek(null);
+
+        chess.promoteVariation(d4);
+
+        expect(chess.nextMove()?.san).toBe('e4');
+
+        chess.promoteVariation(d4, true);
+        expect(chess.nextMove()?.san).toBe('d4');
+    });
 });
