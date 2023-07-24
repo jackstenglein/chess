@@ -31,7 +31,7 @@ export class Pgn {
             const parseTree = parse(pgnString.replace(/\s\s+/g, ' ').replace(/\n/g, ' '), {
                 startRule: 'game',
             }) as ParseTree;
-            console.log(JSON.stringify(parseTree, null, 2));
+            // console.log(JSON.stringify(parseTree, null, 2));
 
             moves = parseTree.moves;
             if (parseTree.gameComment && parseTree.gameComment.comment) {

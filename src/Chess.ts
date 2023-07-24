@@ -757,17 +757,48 @@ export class Chess {
     }
 
     canPromoteVariation(move = this._currentMove, intoMainline = false): boolean {
-        return (
-            move !== null &&
-            !this.isInMainline(move) &&
-            move.variation[0].previous !== null &&
-            (intoMainline || !this.isInMainline(move.variation[0].previous))
-        );
+        if (!move) {
+            return false;
+        }
+        if (this.isInMainline(move)) {
+            return false;
+        }
+
+        if (!move.variation[0].previous) {
+            return false;
+        }
+        if (intoMainline) {
+            return true;
+        }
+
+        const variantRoot = move.variation[0];
+        const variantParent = variantRoot.previous?.next;
+        if (!variantParent) {
+            return false;
+        }
+
+        const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantRoot);
+        return variantIndex >= 1;
     }
 
     promoteVariation(move = this._currentMove, intoMainline = false) {
         if (!move || !this.canPromoteVariation(move, intoMainline)) {
             return;
+        }
+
+        if (intoMainline) {
+            let moveRoot: Move | undefined = move.variation[0];
+            do {
+                if (this.isInMainline(moveRoot.previous)) {
+                    break;
+                }
+                moveRoot = moveRoot.previous?.variation[0];
+            } while (moveRoot);
+
+            if (!moveRoot) {
+                return;
+            }
+            move = moveRoot;
         }
 
         const variantRoot = move.variation[0];
@@ -780,7 +811,7 @@ export class Chess {
         if (variantIndex < 0) {
             return;
         }
-        if (variantIndex === 0) {
+        if (intoMainline || variantIndex === 0) {
             // Fix variation and next for previous moves
             const parentVariation = variantParent.variation;
             const parentIndex = parentVariation.findIndex((m) => m === variantParent);
@@ -789,7 +820,11 @@ export class Chess {
             variantRoot.previous!.next = variantRoot;
 
             // Fix variations field for both variations
-            variantRoot.variations = [variantParent.variation, ...variantParent.variations.slice(1)];
+            variantRoot.variations = [
+                variantParent.variation,
+                ...variantParent.variations.slice(0, variantIndex),
+                ...variantParent.variations.slice(variantIndex + 1),
+            ];
             variantParent.variations = [];
 
             // Fix variation field for both variations
@@ -811,21 +846,5 @@ export class Chess {
             variantRoot,
             variantParent,
         });
-    }
-
-    makeMainline(move = this._currentMove) {
-        if (!move) {
-            return;
-        }
-
-        let moveRoot: Move | undefined = move.variation[0];
-        do {
-            if (this.isInMainline(moveRoot.previous)) {
-                break;
-            }
-            moveRoot = moveRoot.previous?.variation[0];
-        } while (moveRoot);
-
-        this.promoteVariation(moveRoot, true);
     }
 }
