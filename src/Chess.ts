@@ -778,7 +778,7 @@ export class Chess {
         }
 
         const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantRoot);
-        return variantIndex >= 1;
+        return variantIndex >= 0;
     }
 
     promoteVariation(move = this._currentMove, intoMainline = false) {
