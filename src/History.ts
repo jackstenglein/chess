@@ -118,24 +118,24 @@ function convertChesscomHighlights(commentDiag?: DiagramComment): DiagramComment
 
 export class History {
     setUpFen: string | null;
+    setUpPly: number;
     moves: Move[] = [];
 
     constructor(moves: PgnMove[], setUpFen: string | null = null, sloppy = false) {
         this.setUpFen = setUpFen;
+        this.setUpPly = 1;
+        if (setUpFen) {
+            const fen = new Fen(setUpFen);
+            this.setUpPly = 2 * fen.moveNumber;
+            if (fen.colorToPlay === 'w') {
+                this.setUpPly -= 1;
+            }
+        }
 
         if (moves.length === 0) {
             this.clear();
         } else {
-            let initialPly = 1;
-            if (setUpFen) {
-                const fen = new Fen(setUpFen);
-                initialPly = 2 * fen.moveNumber;
-                if (fen.colorToPlay === 'w') {
-                    initialPly -= 1;
-                }
-            }
-
-            this.moves = this.traverse(moves, setUpFen, null, initialPly, sloppy);
+            this.moves = this.traverse(moves, setUpFen, null, this.setUpPly, sloppy);
         }
     }
 
@@ -248,7 +248,7 @@ export class History {
         try {
             const chessJsMove = chess.move(notation, { strict: !sloppy });
             if (chessJsMove) {
-                return this.getMove(previous ? previous.ply + 1 : 1, {} as PgnMove, chessJsMove, chess);
+                return this.getMove(previous ? previous.ply + 1 : this.setUpPly, {} as PgnMove, chessJsMove, chess);
             }
         } catch (err) {
             console.error(err);

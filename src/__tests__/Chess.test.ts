@@ -282,6 +282,35 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         const chess = new Chess({ pgn });
     });
 
+    it('should set first move variant ply', function () {
+        const pgn = `[Event "Titled Tuesday 2nd Nov"]
+[Site "chess.com INT"]
+[Date "2021.11.02"]
+[Round "5"]
+[White "Perera Alfonso, R."]
+[Black "Narayanan, Sri"]
+[Result "1-0"]
+[ECO "B15"]
+[WhiteElo "2354"]
+[BlackElo "2540"]
+[Annotator "Jesse"]
+[SetUp "1"]
+[FEN "r1bqr1k1/pp1n1pp1/2pb1p2/8/3P1B1p/2PB3P/PPQ1NPP1/R4RK1 b - - 0 12"]
+[PlyCount "16"]
+[EventDate "2021.11.02"]
+
+12... Rxe2 $2 {this is a trick problem :-) Re2 doesn't work so black
+should play Nf8 with equality} (12... Nf8 $10) 13. Qxe2 Bxf4
+14. Qe4 $1 $18 {whoops!} Qc7 15. Qh7+ Kf8 16. Rae1 Ne5 17. dxe5 fxe5 18. Qh8+
+Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
+
+        const chess = new Chess({ pgn });
+        chess.seek(null);
+        const move = chess.move('Bxf4');
+
+        expect(move?.ply).toBe(24);
+    });
+
     it('should reorder variants after promotion', function () {
         const chess = new Chess();
         const e4 = chess.move('e4');
