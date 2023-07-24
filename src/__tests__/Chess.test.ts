@@ -282,4 +282,43 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         const chess = new Chess({ pgn });
         console.log(chess.pgn.render());
     });
+
+    it('should allow variant promotion', function () {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        const e6 = chess.move('e6');
+        chess.seek(e4);
+        const c6 = chess.move('c6');
+        chess.seek(e4);
+
+        expect(chess.nextMove()?.san).toBe('e6');
+        expect(e6?.variations[0][0].san).toBe('c6');
+
+        chess.promoteVariation(c6, true);
+
+        expect(chess.nextMove()?.san).toBe('c6');
+        expect(c6?.variations[0][0].san).toBe('e6');
+        expect(e6?.variations).toHaveLength(0);
+    });
+
+    it('should promote to mainline from deep variant', function () {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        const e6 = chess.move('e6');
+        chess.seek(e4);
+        const c6 = chess.move('c6');
+        chess.move('d4');
+        chess.seek(c6);
+        const nf3 = chess.move('Nf3');
+
+        chess.seek(e4);
+
+        expect(chess.nextMove()?.san).toBe('e6');
+        expect(e6?.variations[0][0].san).toBe('c6');
+
+        chess.makeMainline(nf3);
+        expect(chess.nextMove()?.san).toBe('c6');
+        expect(c6?.variations[0][0].san).toBe('e6');
+        expect(e6?.variations).toHaveLength(0);
+    });
 });

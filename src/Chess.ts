@@ -661,7 +661,6 @@ export class Chess {
             move.previous.next.variations = move.previous.next.variations.filter((v) => v.length > 0);
         }
 
-        console.log('Checking if current move is descendant');
         if (this.isDescendant(move)) {
             this.seek(move.previous);
         }
@@ -757,17 +756,17 @@ export class Chess {
         }
     }
 
-    canPromoteVariation(move = this._currentMove): boolean {
+    canPromoteVariation(move = this._currentMove, intoMainline = false): boolean {
         return (
             move !== null &&
             !this.isInMainline(move) &&
             move.variation[0].previous !== null &&
-            !this.isInMainline(move.variation[0].previous)
+            (intoMainline || !this.isInMainline(move.variation[0].previous))
         );
     }
 
-    promoteVariation(move = this._currentMove) {
-        if (!move || !this.canPromoteVariation(move)) {
+    promoteVariation(move = this._currentMove, intoMainline = false) {
+        if (!move || !this.canPromoteVariation(move, intoMainline)) {
             return;
         }
 
@@ -812,5 +811,21 @@ export class Chess {
             variantRoot,
             variantParent,
         });
+    }
+
+    makeMainline(move = this._currentMove) {
+        if (!move) {
+            return;
+        }
+
+        let moveRoot: Move | undefined = move.variation[0];
+        do {
+            if (this.isInMainline(moveRoot.previous)) {
+                break;
+            }
+            moveRoot = moveRoot.previous?.variation[0];
+        } while (moveRoot);
+
+        this.promoteVariation(moveRoot, true);
     }
 }
