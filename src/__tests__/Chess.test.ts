@@ -384,8 +384,16 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         chess.promoteVariation(d4);
 
         expect(chess.nextMove()?.san).toBe('e4');
+        expect(chess.firstMove()?.san).toBe('e4');
+        expect(e4?.variations[0][0].san).toBe('d4');
 
         chess.promoteVariation(d4, true);
         expect(chess.nextMove()?.san).toBe('d4');
+        expect(d4?.variations[0][0].san).toBe('e4');
+        expect(e4?.variations).toHaveLength(0);
+        expect(chess.firstMove()?.san).toBe('d4');
+        expect(chess.isInMainline(d4)).toBeTruthy();
+
+        console.log(chess.pgn.render());
     });
 });

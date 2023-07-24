@@ -817,9 +817,11 @@ export class Chess {
                 const parentVariation = variantParent.variation;
                 const parentIndex = parentVariation.findIndex((m) => m === variantParent);
                 variantParent.variation = parentVariation.splice(parentIndex);
-                parentVariation.push(...move.variation);
                 if (variantRoot.previous) {
                     variantRoot.previous.next = variantRoot;
+                    parentVariation.push(...move.variation);
+                } else {
+                    this.pgn.history.moves = variantRoot.variation;
                 }
 
                 // Fix variations field for both variations
