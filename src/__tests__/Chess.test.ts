@@ -312,7 +312,7 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         chess.move('e5');
         chess.seek(e4);
         const c6 = chess.move('c6');
-        chess.move('d4');
+        const d4 = chess.move('d4');
         chess.seek(c6);
         const nf3 = chess.move('Nf3');
         chess.seek(e4);
@@ -320,11 +320,18 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         expect(chess.nextMove()?.san).toBe('e6');
         expect(e6?.variations[0][0].san).toBe('e5');
         expect(e6?.variations[1][0].san).toBe('c6');
+        expect(d4?.variations[0][0].san).toBe('Nf3');
+        expect(nf3?.variations).toHaveLength(0);
 
         chess.promoteVariation(nf3, true);
         expect(chess.nextMove()?.san).toBe('c6');
         expect(c6?.variations[0][0].san).toBe('e6');
         expect(c6?.variations[1][0].san).toBe('e5');
         expect(e6?.variations).toHaveLength(0);
+
+        chess.seek(chess.nextMove());
+        expect(chess.nextMove()?.san).toBe('Nf3');
+        expect(nf3?.variations[0][0].san).toBe('d4');
+        expect(d4?.variations).toHaveLength(0);
     });
 });

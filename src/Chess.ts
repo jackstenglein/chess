@@ -786,59 +786,55 @@ export class Chess {
             return;
         }
 
-        if (intoMainline) {
-            let moveRoot: Move | undefined = move.variation[0];
-            do {
-                if (this.isInMainline(moveRoot.previous)) {
-                    break;
+        let nextVariantRoot: Move | undefined = move.variation[0];
+        let nextVariantParent = nextVariantRoot.previous?.next;
+        if (!nextVariantParent) {
+            return;
+        }
+
+        let variantRoot: Move;
+        let variantParent: Move;
+
+        do {
+            variantRoot = nextVariantRoot;
+            variantParent = nextVariantParent;
+
+            const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantRoot);
+            if (variantIndex < 0) {
+                break;
+            }
+            if (intoMainline || variantIndex === 0) {
+                // Fix variation and next for previous moves
+                const parentVariation = variantParent.variation;
+                const parentIndex = parentVariation.findIndex((m) => m === variantParent);
+                variantParent.variation = parentVariation.splice(parentIndex);
+                parentVariation.push(...move.variation);
+                variantRoot.previous!.next = variantRoot;
+
+                // Fix variations field for both variations
+                variantRoot.variations = [
+                    variantParent.variation,
+                    ...variantParent.variations.slice(0, variantIndex),
+                    ...variantParent.variations.slice(variantIndex + 1),
+                ];
+                variantParent.variations = [];
+
+                // Fix variation field for both variations
+                for (let i = variantRoot.variation.length - 1; i >= 0; i--) {
+                    variantRoot.variation[i].variation = variantRoot.previous!.variation;
                 }
-                moveRoot = moveRoot.previous?.variation[0];
-            } while (moveRoot);
-
-            if (!moveRoot) {
-                return;
+                for (const m of variantParent.variation) {
+                    m.variation = variantParent.variation;
+                }
+            } else {
+                const temp = variantParent.variations[variantIndex - 1];
+                variantParent.variations[variantIndex - 1] = variantParent.variations[variantIndex];
+                variantParent.variations[variantIndex] = temp;
             }
-            move = moveRoot;
-        }
 
-        const variantRoot = move.variation[0];
-        const variantParent = variantRoot.previous?.next;
-        if (!variantParent) {
-            return;
-        }
-
-        const variantIndex = variantParent.variations.findIndex((v) => v[0] === variantRoot);
-        if (variantIndex < 0) {
-            return;
-        }
-        if (intoMainline || variantIndex === 0) {
-            // Fix variation and next for previous moves
-            const parentVariation = variantParent.variation;
-            const parentIndex = parentVariation.findIndex((m) => m === variantParent);
-            variantParent.variation = parentVariation.splice(parentIndex);
-            parentVariation.push(...move.variation);
-            variantRoot.previous!.next = variantRoot;
-
-            // Fix variations field for both variations
-            variantRoot.variations = [
-                variantParent.variation,
-                ...variantParent.variations.slice(0, variantIndex),
-                ...variantParent.variations.slice(variantIndex + 1),
-            ];
-            variantParent.variations = [];
-
-            // Fix variation field for both variations
-            for (let i = variantRoot.variation.length - 1; i >= 0; i--) {
-                variantRoot.variation[i].variation = variantRoot.previous!.variation;
-            }
-            for (const m of variantParent.variation) {
-                m.variation = variantParent.variation;
-            }
-        } else {
-            const temp = variantParent.variations[variantIndex - 1];
-            variantParent.variations[variantIndex - 1] = variantParent.variations[variantIndex];
-            variantParent.variations[variantIndex] = temp;
-        }
+            nextVariantRoot = variantRoot.previous?.variation[0];
+            nextVariantParent = nextVariantRoot?.previous?.next;
+        } while (intoMainline && nextVariantRoot && nextVariantParent && !this.isInMainline(nextVariantRoot));
 
         publishEvent(this.observers, {
             type: EventType.PromoteVariation,
