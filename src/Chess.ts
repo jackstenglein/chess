@@ -41,6 +41,7 @@ export enum EventType {
     UpdateCommand = 'UPDATE_COMMAND',
     UpdateNags = 'UPDATE_NAGS',
     UpdateDrawables = 'UPDATE_DRAWABLES',
+    UpdateHeader = 'UPDATE_HEADER',
     PromoteVariation = 'PROMOTE_VARIATION',
 }
 
@@ -58,6 +59,8 @@ export interface Event {
     commentText?: string;
     commandName?: string;
     commandValue?: string;
+    headerName?: string;
+    headerValue?: string;
 }
 
 export interface Observer {
@@ -754,6 +757,20 @@ export class Chess {
                 move,
             });
         }
+    }
+
+    setHeader(headerName: string, headerValue?: string) {
+        if (headerValue === undefined) {
+            delete this.pgn.header.tags[headerName];
+        } else {
+            this.pgn.header.tags[headerName] = headerValue;
+        }
+
+        publishEvent(this.observers, {
+            type: EventType.UpdateHeader,
+            headerName,
+            headerValue
+        });
     }
 
     getVariantParent(move = this._currentMove): Move | null {
