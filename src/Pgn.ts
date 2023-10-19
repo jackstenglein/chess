@@ -28,7 +28,7 @@ export class Pgn {
         let moves: PgnMove[] = [];
         const moveText = pgnString.substring(lastHeaderElement);
         if (moveText.trim().length > 0) {
-            const parseTree = parse(pgnString.replace(/\s\s+/g, ' ').replace(/\n/g, ' '), {
+            const parseTree = parse(pgnString, {
                 startRule: 'game',
             }) as ParseTree;
             // console.log(JSON.stringify(parseTree, null, 2));

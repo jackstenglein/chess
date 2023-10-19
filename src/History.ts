@@ -334,7 +334,7 @@ export class History {
         // remove spaces before brackets
         ret = ret.replace(/\s+\)/g, ')');
         // remove double spaces
-        ret = ret.replace(/\s\s+/g, ' ').trim();
+        ret = ret.replace(/  /g, ' ').trim();
         return ret;
     }
 }

@@ -366,6 +366,33 @@ break. } 40. Qe3 (40. Qxf3 Rf4 $19) (40. gxf3 Rh2+ $19) (40. Kxf3 Bh5+ $19) 40..
 
         new Pgn(pgnString);
     });
+
+    it('should read and return PGN with newline in comments', () => {
+        const pgnString = `[Event "Titled Tuesday 2nd Nov"]
+[Site "chess.com INT"]
+[Date "2021.11.02"]
+[Round "5"]
+[White "Perera Alfonso, R."]
+[Black "Narayanan, Sri"]
+[Result "1-0"]
+[WhiteElo "2354"]
+[BlackElo "2540"]
+[Annotator "Jesse"]
+[UTCDate "2023.06.23"]
+[UTCTime "22:37:43"]
+[Variant "From Position"]
+[ECO "?"]
+[Opening "?"]
+[FEN "r1bqr1k1/pp1n1pp1/2pb1p2/8/3P1B1p/2PB3P/PPQ1NPP1/R4RK1 b - - 0 12"]
+[SetUp "1"]
+
+{ game comment }
+12... Rxe2 $2 { this is a 
+trick problem :-) Re2 doesn't work so black should play Nf8 with equality } (12... Nf8 $10) (12... Bxf4 $10) 13. Qxe2 Bxf4 14. Qe4 $1 $18 { whoops! } 14... Qc7 15. Qh7+ Kf8 16. Rae1 Ne5 17. dxe5 fxe5 18. Qh8+ Ke7 19. Qxh4+ f6 20. Qxf4 { 1-0 White wins. } 1-0`;
+
+        const pgn = new Pgn(pgnString);
+        expect(pgn.render()).toBe(pgnString);
+    });
 });
 
 // [Event "Test Exercise Study: Chapter 5"]
