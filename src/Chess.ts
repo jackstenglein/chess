@@ -769,7 +769,7 @@ export class Chess {
         publishEvent(this.observers, {
             type: EventType.UpdateHeader,
             headerName,
-            headerValue
+            headerValue,
         });
     }
 

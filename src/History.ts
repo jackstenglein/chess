@@ -293,7 +293,7 @@ export class History {
             let result = '';
             for (let move of variation) {
                 if (renderComments && move.commentMove) {
-                    result += '{' + move.commentMove + '} ';
+                    result += `{ ${move.commentMove} } `;
                     needReminder = true;
                 }
 
@@ -311,7 +311,7 @@ export class History {
                 }
 
                 if (renderComments && move.commentAfter) {
-                    result += '{' + move.commentAfter + '} ';
+                    result += `{ ${move.commentAfter} } `;
                     needReminder = true;
                 }
 

@@ -3,7 +3,7 @@
  * Repository: https://github.com/shaack/cm-pgn
  * License: MIT, see file 'LICENSE'
  */
-import { parse, ParseTree } from '@mliebelt/pgn-parser';
+import { parse, ParseTree } from '@jackstenglein/pgn-parser';
 import { PgnMove } from '@mliebelt/pgn-types';
 
 import { Header, TAGS } from './Header';
@@ -63,7 +63,7 @@ export class Pgn {
         let result = renderHeader ? this.header.render() + '\n' : '';
 
         if (renderComments && this.gameComment) {
-            result += `{${this.gameComment}}\n`;
+            result += `{ ${this.gameComment} }\n`;
         }
 
         let history = this.history.render(renderComments, renderNags);
