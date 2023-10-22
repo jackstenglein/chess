@@ -425,4 +425,50 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
 
         console.log(chess.pgn.render());
     });
+
+    it('should keep variations when deleting mainline moves', function () {
+        const pgn = `[Event "Live Chess"]
+        [Site "Chess.com"]
+        [Date "2023.06.21"]
+        [Round "-"]
+        [White "JackStenglein"]
+        [Black "LCalvary"]
+        [Result "0-1"]
+        [WhiteElo "1807"]
+        [BlackElo "2068"]
+        [TimeControl "5400+30"]
+        [Termination "LCalvary won by resignation"]
+        [UTCDate "2023.06.21"]
+        [UTCTime "22:39:16"]
+        [Variant "Standard"]
+        [ECO "B22"]
+        [Opening "Sicilian Defense: Alapin Variation"]
+        [Annotator "https://lichess.org/@/JackStenglein"]
+        [PlyCount "16"]
+        
+        1. e4 { [%clk 1:30:30] } c5 { [%clk 1:30:30] } 2. c3 { [%clk 1:30:47] } Nf6 { [%clk 1:30:53] } 3. e5 { [%clk 1:31:09] } Nd5 { [%clk 1:31:22] } 4. Bc4 { [%clk 1:31:21] } Nb6 { [%clk 1:31:18] } 5. Bb3 { [%clk 1:31:38] } d5 { [%clk 1:31:07] } (5... Nd5 6. f3 (6. Nf3) (6. d4 cxd4) 6... b6) 6. d4 { [%clk 1:31:17] } cxd4 { [%clk 1:30:26] } 7. cxd4 { [%clk 1:30:50] } Bf5 { [%clk 1:29:22] } 8. Nc3 { [%clk 1:29:53] } e6 $6 { Test comment 2 } { [%c_effect e6;square;e6;type;Inaccuracy;persistent;true][%clk 1:29:07] } 0-1`;
+
+        const chess = new Chess();
+        chess.loadPgn(pgn);
+
+        chess.seek(chess.history()[9]);
+        expect(chess.currentMove()?.san).toBe('d5');
+        expect(chess.currentMove()?.variations[0][0].san).toBe('Nd5');
+
+        chess.seek(chess.currentMove()?.variations[0][1] || null);
+        expect(chess.currentMove()?.san).toBe('f3');
+
+        chess.delete();
+
+        expect(chess.currentMove()?.san).toBe('Nd5');
+        expect(chess.nextMove()?.san).toBe('Nf3');
+
+        const nf3 = chess.nextMove();
+        expect(nf3?.variations[0][0].san).toBe('d4');
+
+        chess.delete(nf3);
+        expect(chess.currentMove()?.san).toBe('Nd5');
+        expect(chess.nextMove()?.san).toBe('d4');
+        expect(chess.currentMove()?.variation).toHaveLength(3);
+    });
 });

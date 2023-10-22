@@ -644,15 +644,13 @@ export class Chess {
     }
 
     /**
-     * Delete a move and all moves after it
+     * Delete a move and all moves after it. If the move has variations, the top variation
+     * replaces this move as the continuation.
      * @param move The move to delete from. Defaults to the current move.
      */
     delete(move = this._currentMove) {
         if (!move) {
             return;
-        }
-        if (move.previous?.next === move) {
-            move.previous.next = null;
         }
 
         const index = move.variation.findIndex((element) => {
@@ -660,7 +658,16 @@ export class Chess {
         });
         move.variation.splice(index);
 
-        if (index === 0 && move.previous?.next) {
+        if (move.previous?.next === move) {
+            move.previous.next = null;
+
+            if (move.variations.length > 0) {
+                move.previous.next = move.variations[0][0];
+                move.previous.variation.push(...move.previous.next.variation);
+                move.previous.next.variation = move.previous.variation;
+                move.previous.next.variations = move.variations.slice(1);
+            }
+        } else if (index === 0 && move.previous?.next) {
             move.previous.next.variations = move.previous.next.variations.filter((v) => v.length > 0);
         }
 
