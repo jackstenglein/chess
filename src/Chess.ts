@@ -351,11 +351,11 @@ export class Chess {
     /**
      * Checks whether the provided move is in the mainline.
      * @param move The move to check. Defaults to the current move.
-     * @returns {boolean} True if the move is in the mainline.
+     * @returns {boolean} True if the move is in the mainline or null (the starting position is in the mainline).
      */
     isInMainline(move = this._currentMove): boolean {
         if (!move) {
-            return false;
+            return true;
         }
         return move.variation === this.pgn.history.moves;
     }
