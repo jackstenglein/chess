@@ -679,7 +679,7 @@ export class Chess {
             type: EventType.DeleteMove,
             move: move,
             previousMove: move.previous,
-            mainlineMove: move.previous?.next,
+            mainlineMove: move.previous ? move.previous.next : this.firstMove(),
         });
     }
 
