@@ -658,17 +658,24 @@ export class Chess {
         });
         move.variation.splice(index);
 
-        if (move.previous?.next === move) {
-            move.previous.next = null;
+        const mainlineMove = move.previous ? move.previous.next : this.firstMove();
 
-            if (move.variations.length > 0) {
-                move.previous.next = move.variations[0][0];
-                move.previous.variation.push(...move.previous.next.variation);
-                move.previous.next.variation = move.previous.variation;
-                move.previous.next.variations = move.variations.slice(1);
+        if (mainlineMove === move) {
+            if (move.previous) {
+                move.previous.next = null;
+
+                if (move.variations.length > 0) {
+                    move.previous.next = move.variations[0][0];
+                    move.previous.variation.push(...move.previous.next.variation);
+                    move.previous.next.variation = move.previous.variation;
+                    move.previous.next.variations = move.variations.slice(1);
+                }
+            } else if (move.variations.length > 0) {
+                this.pgn.history.moves = move.variations[0][0].variation;
+                move.variations[0][0].variations = move.variations.slice(1);
             }
-        } else if (index === 0 && move.previous?.next) {
-            move.previous.next.variations = move.previous.next.variations.filter((v) => v.length > 0);
+        } else if (index === 0 && mainlineMove) {
+            mainlineMove.variations = mainlineMove.variations.filter((v) => v.length > 0);
         }
 
         if (this.isDescendant(move)) {
@@ -679,7 +686,7 @@ export class Chess {
             type: EventType.DeleteMove,
             move: move,
             previousMove: move.previous,
-            mainlineMove: move.previous ? move.previous.next : this.firstMove(),
+            mainlineMove,
         });
     }
 
