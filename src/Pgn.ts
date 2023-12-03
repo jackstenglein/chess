@@ -4,7 +4,7 @@
  * License: MIT, see file 'LICENSE'
  */
 import { parse, ParseTree } from '@jackstenglein/pgn-parser';
-import { PgnMove } from '@mliebelt/pgn-types';
+import { PgnMove, GameComment } from '@mliebelt/pgn-types';
 
 import { Header, TAGS } from './Header';
 import { History } from './History';
@@ -16,10 +16,10 @@ interface PgnProps {
 export class Pgn {
     header: Header;
     history: History;
-    gameComment: string;
+    gameComment: GameComment;
 
     constructor(pgnString = '', props: PgnProps = {}) {
-        this.gameComment = '';
+        this.gameComment = {};
 
         const lastHeaderElement =
             pgnString.trim().slice(-1) === ']' ? pgnString.length : pgnString.lastIndexOf(']\n\n') + 1;
@@ -34,8 +34,8 @@ export class Pgn {
             // console.log(JSON.stringify(parseTree, null, 2));
 
             moves = parseTree.moves;
-            if (parseTree.gameComment && parseTree.gameComment.comment) {
-                this.gameComment = parseTree.gameComment.comment;
+            if (parseTree.gameComment) {
+                this.gameComment = parseTree.gameComment;
             }
         }
 
@@ -62,8 +62,8 @@ export class Pgn {
     render(width = -1, renderHeader = true, renderComments = true, renderNags = true) {
         let result = renderHeader ? this.header.render() + '\n' : '';
 
-        if (renderComments && this.gameComment) {
-            result += `{ ${this.gameComment} }\n`;
+        if (renderComments && this.gameComment.comment) {
+            result += `{ ${this.gameComment.comment} }\n`;
         }
 
         let history = this.history.render(renderComments, renderNags);

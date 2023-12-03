@@ -712,7 +712,7 @@ export class Chess {
 
     getComment(type: CommentType = CommentType.After, move = this._currentMove): string {
         if (!move) {
-            return this.pgn.gameComment;
+            return this.pgn.gameComment.comment || '';
         }
         if (type === CommentType.Before) {
             return move.commentMove || '';
@@ -722,7 +722,7 @@ export class Chess {
 
     setComment(text: string, type: CommentType = CommentType.After, move = this._currentMove) {
         if (move === null) {
-            this.pgn.gameComment = text;
+            this.pgn.gameComment.comment = text;
         } else if (type === CommentType.Before) {
             move.commentMove = text;
         } else if (type === CommentType.After) {
