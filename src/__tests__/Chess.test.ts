@@ -471,4 +471,10 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         expect(chess.nextMove()?.san).toBe('d4');
         expect(chess.currentMove()?.variation).toHaveLength(3);
     });
+
+    it('renders blank PGN', function () {
+        const chess = new Chess({ pgn: '' });
+        chess.setHeader('White', 'Test');
+        expect(chess.renderPgn()).toBe('[White "Test"]\n\n');
+    });
 });
