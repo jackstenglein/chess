@@ -438,8 +438,8 @@ export class Chess {
             this.pgn.header.tags[TAGS.SetUp] = '1';
             this.pgn.header.tags[TAGS.FEN] = this.chessjs.fen();
             this.pgn.history.setUpFen = fen;
-            publishEvent(this.observers, { type: EventType.Initialized, fen: fen });
         }
+        publishEvent(this.observers, { type: EventType.Initialized, fen: fen });
     }
 
     /**
@@ -448,7 +448,7 @@ export class Chess {
      * @param pgn
      */
     loadPgn(pgn: string) {
-        this.pgn = new Pgn(pgn);
+        this.pgn = new Pgn(pgn, { sloppy: true });
         this._currentMove = this.lastMove();
         this.chessjs.load(this.fen());
         publishEvent(this.observers, { type: EventType.Initialized, pgn: pgn });

@@ -205,7 +205,7 @@ describe('Chess', function () {
     });
 
     it('should load different PGNs and then work correctly', function () {
-        const fen = 'ppppkppp/pppppppp/pppppppp/pppppppp/8/8/8/RNBQKBNR w KQ - 0 1';
+        const fen = 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2';
         const chess = new Chess({ fen: fen });
         expect(chess.move('e4')).toBe(null);
         expect(chess.move('Ke2')).toBeTruthy();
