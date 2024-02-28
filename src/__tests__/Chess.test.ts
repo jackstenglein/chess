@@ -477,4 +477,24 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         chess.setHeader('White', 'Test');
         expect(chess.renderPgn()).toBe('[White "Test"]\n\n');
     });
+
+    it('returns correct material difference', () => {
+        const chess = new Chess();
+
+        chess.move('e4');
+        expect(chess.currentMove()?.materialDifference).toBe(0);
+
+        chess.move('d5');
+        chess.move('exd5');
+        expect(chess.currentMove()?.materialDifference).toBe(1);
+
+        chess.move('Qxd5');
+        expect(chess.currentMove()?.materialDifference).toBe(0);
+
+        chess.move('Nc3');
+        chess.move('Nf6');
+        chess.move('Nxd5');
+        chess.move('Nxd5');
+        expect(chess.currentMove()?.materialDifference).toBe(6);
+    });
 });

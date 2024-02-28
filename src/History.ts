@@ -19,6 +19,7 @@ export type Move = ChessJsMove & {
     variations: Move[][];
     fen: string;
     uci: string;
+    materialDifference: number;
 
     gameOver: boolean;
     isDraw: boolean;
@@ -116,6 +117,28 @@ function convertChesscomHighlights(commentDiag?: DiagramComment): DiagramComment
     return commentDiag;
 }
 
+const fenValues: Record<string, number> = {
+    p: -1,
+    n: -3,
+    b: -3,
+    r: -5,
+    q: -9,
+    P: 1,
+    N: 3,
+    B: 3,
+    R: 5,
+    Q: 9,
+};
+
+function getMaterialDifference(fen: string): number {
+    const pieces = fen.split(' ')[0];
+    let materialDiff = 0;
+    for (const char of pieces) {
+        materialDiff += fenValues[char] || 0;
+    }
+    return materialDiff;
+}
+
 export class History {
     setUpFen: string | null;
     setUpPly: number;
@@ -207,6 +230,7 @@ export class History {
             commentMove: pgnMove.commentMove,
             commentAfter: pgnMove.commentAfter,
             commentDiag: convertChesscomHighlights(pgnMove.commentDiag),
+            materialDifference: getMaterialDifference(chessJsMove.after),
         };
         return move;
     }
