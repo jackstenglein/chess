@@ -53,7 +53,13 @@ export function renderCommands(commentDiag: DiagramComment): string {
     }
 
     Object.entries(rest).forEach(([k, v]) => {
-        if (v) {
+        if (k === 'clk' && v && typeof v === 'string') {
+            const tokens = v.split(':');
+            while (tokens.length < 3) {
+                tokens.unshift('00');
+            }
+            result += `[%clk ${tokens.join(':')}]`;
+        } else if (v) {
             result += `[%${k} ${v}]`;
         }
     });

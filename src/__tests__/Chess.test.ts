@@ -497,4 +497,13 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         chess.move('Nxd5');
         expect(chess.currentMove()?.materialDifference).toBe(6);
     });
+
+    it('renders correct clk pgn', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        chess.setCommand('clk', '30:40');
+
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n1. e4 { [%clk 00:30:40] }');
+    });
 });
