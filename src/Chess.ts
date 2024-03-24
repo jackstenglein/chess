@@ -94,6 +94,29 @@ export interface ChessProps {
 }
 
 /**
+ * Returns the normalized version of the provided FEN. FENs are normalized in the following way:
+ * 1. The en passant target square is set to -, unless en passant is currently a legal move.
+ * 2. The halfmove clock field is set to 0.
+ * 3. The fullmove clock field is set to 1.
+ *
+ * @param fen The FEN to normalize.
+ * @returns The normalized FEN.
+ */
+export function normalizeFen(fen: string): string {
+    const tokens = fen.split(' ');
+    if (tokens.length < 4) {
+        throw new Error(`Invalid FEN: '${fen}'. FEN does not have at least 4 tokens.`);
+    }
+
+    const pieces = tokens[0];
+    const color = tokens[1];
+    const castling = tokens[2];
+    const enPassant = tokens[3];
+
+    return `${pieces} ${color} ${castling} ${enPassant} 0 1`;
+}
+
+/**
  * Like chess.js, but handles variations. Uses chess.js for validation and @jackstenglein/pgn-parser for the history and PGN header
  */
 export class Chess {
@@ -239,7 +262,7 @@ export class Chess {
     }
 
     /**
-     * Returns the FEN of the given move. If no move is provided, then the current move is used. If there is no current move (IE: no moves have been made), the then setup FEN is returned.
+     * Returns the FEN of the given move. If no move is provided, then the current move is used. If there is no current move (IE: no moves have been made), then the setup FEN is returned.
      * @param move The move to return the FEN for.
      */
     fen(move = this._currentMove): string {
@@ -248,6 +271,23 @@ export class Chess {
         } else {
             return this.setUpFen();
         }
+    }
+
+    /**
+     * Returns the normalized FEN of the given move. If no move is provided, then the current move is used.
+     * If there is no current move, then the setup FEN is normalized and returned. FENs are normalized in
+     * the following way:
+     * 1. The en passant target square is set to -, unless en passant is currently a legal move.
+     * 2. The halfmove clock field is set to 0.
+     * 3. The fullmove clock field is set to 1.
+     *
+     * @param move The move to return the normalized FEN for.
+     */
+    normalizedFen(move = this._currentMove): string {
+        if (move) {
+            return normalizeFen(move.fen);
+        }
+        return normalizeFen(this.setUpFen());
     }
 
     /**
