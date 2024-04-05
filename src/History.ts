@@ -1,8 +1,3 @@
-/**
- * Author and copyright: Stefan Haack (https://shaack.com)
- * Repository: https://github.com/shaack/cm-pgn
- * License: MIT, see file 'LICENSE'
- */
 import { PgnMove, GameComment } from '@mliebelt/pgn-types';
 import { Chess, Move as ChessJsMove } from 'chess.js';
 import { Fen } from './Fen';
@@ -12,28 +7,75 @@ export interface DiagramComment extends GameComment {
 }
 
 export type Move = ChessJsMove & {
+    /** The next mainline move after this one, if it exists. */
     next: Move | null;
+
+    /** The ply of the move. */
     ply: number;
+
+    /** The previous move, if it exists. */
     previous: Move | null;
+
+    /**
+     * An array of the move's variation. If the move is not in the mainline,
+     * the array starts at the first non-mainline move.
+     */
     variation: Move[];
+
+    /**
+     * An array of non-mainline moves that are alternatives to this move.
+     */
     variations: Move[][];
+
+    /** The FEN after this move is played. */
     fen: string;
+
+    /** The UCI of the move.  */
     uci: string;
+
+    /** The material difference after this move is played. */
     materialDifference: number;
 
+    /** Whether the game is over after the move is played. */
     gameOver: boolean;
+
+    /** Whether it is a draw after the move is played. */
     isDraw: boolean;
+
+    /** Whether it is stalemate after the move is played. */
     isStalemate: boolean;
+
+    /** Whether there is insufficient checkmating material after the move is played. */
     isInsufficientMaterial: boolean;
+
+    /** Whether it is threefold repetition after the move is played. */
     isThreefoldRepetition: boolean;
+
+    /** Whether it is checkmate after the move is played. */
     isCheckmate: boolean;
+
+    /** Whether it is check after the move is played. */
     inCheck: boolean;
 
+    /** Whether a draw was offered on this move. */
     drawOffer?: boolean;
+
+    /** The NAGs assigned to the move. */
     nags?: string[];
+
+    /** The comment on the move. */
     commentMove?: string;
+
+    /** The comment after the move. */
     commentAfter?: string;
+
+    /** The diagram comment on the move. */
     commentDiag?: DiagramComment;
+
+    /** Optional, user-defined data associated with the move. */
+    userData?: {
+        [key: string]: any;
+    };
 };
 
 export function renderCommands(commentDiag: DiagramComment): string {
