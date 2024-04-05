@@ -500,9 +500,15 @@ export class Chess {
      * @param move The move to make.
      * @param previousMove The move to play from. If not included, the currentMove is used.
      * @param sloppy to allow sloppy SAN
+     * @param existingOnly Return null if the Move doesn't already exist. Default false.
      * @returns {Move|null} The created or existing Move, if successful.
      */
-    move(candidate: CandidateMove, previousMove: Move | null = this._currentMove, sloppy = true): Move | null {
+    move(
+        candidate: CandidateMove,
+        previousMove: Move | null = this._currentMove,
+        sloppy = true,
+        existingOnly = false
+    ): Move | null {
         const nextMove = this.nextMove(previousMove);
         if (this.candidateMatches(candidate, nextMove)) {
             publishEvent(this.observers, {
@@ -521,6 +527,10 @@ export class Chess {
                 previousMove: previousMove,
             });
             return this.seek(existingVariant);
+        }
+
+        if (existingOnly) {
+            return null;
         }
 
         // The move doesn't already exist as the mainline or a continuation, so we add it to the PGN.
