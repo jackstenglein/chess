@@ -501,16 +501,21 @@ export class Chess {
      * @param previousMove The move to play from. If not included, the currentMove is used.
      * @param sloppy to allow sloppy SAN
      * @param existingOnly Return null if the Move doesn't already exist. Default false.
+     * @param skipSeek If true, return the move but do not update the current move and do not publish an event. Default false.
      * @returns {Move|null} The created or existing Move, if successful.
      */
     move(
         candidate: CandidateMove,
         previousMove: Move | null = this._currentMove,
         sloppy = true,
-        existingOnly = false
+        existingOnly = false,
+        skipSeek = false
     ): Move | null {
         const nextMove = this.nextMove(previousMove);
         if (this.candidateMatches(candidate, nextMove)) {
+            if (skipSeek) {
+                return nextMove;
+            }
             publishEvent(this.observers, {
                 type: EventType.LegalMove,
                 move: nextMove!,
@@ -521,6 +526,9 @@ export class Chess {
 
         const existingVariant = this.getVariation(candidate, previousMove);
         if (existingVariant) {
+            if (skipSeek) {
+                return existingVariant;
+            }
             publishEvent(this.observers, {
                 type: EventType.LegalMove,
                 move: existingVariant,
@@ -536,6 +544,9 @@ export class Chess {
         // The move doesn't already exist as the mainline or a continuation, so we add it to the PGN.
         try {
             const moveResult = this.pgn.history.addMove(candidate, previousMove, sloppy);
+            if (skipSeek) {
+                return moveResult;
+            }
             publishEvent(this.observers, {
                 type: EventType.NewVariation,
                 move: moveResult,

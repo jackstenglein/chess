@@ -506,4 +506,24 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         const pgn = chess.renderPgn();
         expect(pgn).toBe('\n1. e4 { [%clk 00:30:40] }');
     });
+
+    it('handles existingOnly', () => {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        chess.seek(null);
+
+        const e5 = chess.move('e5', undefined, false, true);
+        expect(e5).toBe(null);
+
+        expect(chess.move('e4', undefined, false, true)).toBe(e4);
+    });
+
+    it('handles skipSeek', () => {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        chess.seek(null);
+
+        expect(chess.move('e4', undefined, false, false, true)).toBe(e4);
+        expect(chess.currentMove()).toBe(null);
+    });
 });
