@@ -477,7 +477,7 @@ export class Chess {
         if (fen !== FEN.start) {
             this.pgn.header.tags[TAGS.SetUp] = '1';
             this.pgn.header.tags[TAGS.FEN] = this.chessjs.fen();
-            this.pgn.history.setUpFen = fen;
+            this.pgn.initializeHistory([], this.chessjs.fen());
         }
         publishEvent(this.observers, { type: EventType.Initialized, fen: fen });
     }

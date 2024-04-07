@@ -39,7 +39,12 @@ export class Pgn {
             }
         }
 
-        this.history = new History(moves, this.header.tags[TAGS.FEN], props.sloppy);
+        this.history = this.initializeHistory(moves, this.header.tags[TAGS.FEN], props.sloppy);
+    }
+
+    initializeHistory(moves: PgnMove[], setupFen?: string, sloppy?: boolean): History {
+        this.history = new History(moves, setupFen, sloppy);
+        return this.history;
     }
 
     wrap(str: string, maxLength: number) {

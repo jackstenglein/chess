@@ -526,4 +526,36 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         expect(chess.move('e4', undefined, false, false, true)).toBe(e4);
         expect(chess.currentMove()).toBe(null);
     });
+
+    it('loads PGN with black to move', () => {
+        const chess = new Chess({
+            pgn: `[Event "Sample Test Position: sample"]
+[Site "https://lichess.org/study/6lpXkW1X/gvIssoz9"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[Annotator "https://lichess.org/@/jessekraai"]
+[FEN "r5k1/pp2bppp/2p1pn2/3rN2q/5QP1/2BP4/PP2PP1P/R4RK1 b - - 0 1"]
+[SetUp "1"]
+[UTCDate "2024.04.07"]
+[UTCTime "15:06:32"]
+
+1... Nxg4! { [1] } 2. Nxg4 (2. Qxg4 Rxe5 { [1] }) 2... Bd6! 3. Qf3 Rg5 { [1] } 4. h3 f5 $19 { black is winning } *`,
+        });
+
+        expect(chess.firstMove()?.san).toBe('Nxg4');
+        expect(chess.firstMove()?.ply).toBe(2);
+
+        const pgn = chess.renderPgn();
+        const newChess = new Chess({ pgn });
+        expect(newChess.firstMove()?.san).toBe('Nxg4');
+        expect(newChess.firstMove()?.ply).toBe(2);
+    });
+
+    it('has correct ply when loading black to move FEN', () => {
+        const chess = new Chess('r5k1/pp2bppp/2p1pn2/3rN2q/5QP1/2BP4/PP2PP1P/R4RK1 b - - 0 1');
+        chess.move('Nxg4');
+        expect(chess.firstMove()?.ply).toBe(2);
+    });
 });
