@@ -2,6 +2,7 @@ import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece, 
 import { Move, getNullMove } from './History';
 import { Pgn, RenderOptions } from './Pgn';
 import { DiagramComment, Tags } from '@jackstenglein/pgn-parser';
+import { Header } from './Header';
 
 export { SQUARES, Square, PieceSymbol };
 
@@ -203,10 +204,10 @@ export class Chess<UserData = undefined> {
     }
 
     /**
-     * @returns The header tags of the PGN.
+     * @returns The header of the PGN.
      */
-    header(): Tags {
-        return this.pgn.header.tags;
+    header(): Header {
+        return this.pgn.header;
     }
 
     /**
@@ -331,7 +332,8 @@ export class Chess<UserData = undefined> {
     }
 
     /**
-     * Sets currentMove to the provided move and returns the new current Move.
+     * Sets currentMove to the provided move and returns the new current Move. Also emits
+     * a LegalMove event.
      * @param move The move to set the currentMove to or null to go to the starting position.
      * If non-null, it must exist in the pgn history.
      * @returns The new current Move.
