@@ -76,12 +76,12 @@ export class Header {
      * Sets the value of the given tag, first parsing it with the PGN parser library.
      * This allows passing a complex tag like [TimeControl "40/1200"] as setValue("TimeControl", "40/1200")
      * and then receiving { value: "40/1200", moves: 40, seconds: 1200 } in response to getValue("TimeControl").
-     * If the provided value is undefined, then the tag is removed.
+     * If the provided value is undefined or empty, then the tag is removed.
      * @param name The name of the tag to update.
      * @param value The value to set it to.
      */
     setValue(name: string, value?: string) {
-        if (value === undefined) {
+        if (!value) {
             delete this.tags[name];
         } else {
             const newTags = parse(`[${name} "${value}"]`, { startRule: 'tags' }).tags || {};
