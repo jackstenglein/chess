@@ -30,7 +30,7 @@
     },
     "homepage": "https://github.com/jackstenglein/chess.ts#readme",
     "dependencies": {
-        "@jackstenglein/pgn-parser": "^1.4.12",
+        "@jackstenglein/pgn-parser": "^2.0.2",
         "chess.js": "^1.0.0-beta.7"
     },
     "devDependencies": {
