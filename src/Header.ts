@@ -115,4 +115,15 @@ export class Header {
 
         return rendered;
     }
+
+    /**
+     * @returns The headers as a record from the header name to the raw value.
+     */
+    valueMap(): Record<string, string> {
+        const result: Record<string, string> = {};
+        for (const tag in this.tags) {
+            result[tag] = this.getRawValue(tag);
+        }
+        return result;
+    }
 }

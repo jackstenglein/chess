@@ -166,4 +166,34 @@ describe('Header', () => {
             items: [{ kind: TimeControlKind.MovesInSeconds, moves: 40, seconds: 3000, value: '40/3000' }],
         });
     });
+
+    it('should get value map', () => {
+        const header = new Header({
+            pgn: `[Event "F/S Return Match"]
+                [Site "Belgrade, Serbia JUG"]
+                [Date "1992.11.04"]
+                [Round "29"]
+                [White "Fischer, Robert J."]
+                [Black "Spassky, Boris V."]
+                [Result "1/2-1/2"]
+                [Foo "Bar"]
+                [WhiteElo "1500 USCF"]
+                [BlackElo "2000"]
+                [TimeControl "40/3600:20/1800+30:900"]`,
+        });
+
+        expect(header.valueMap()).toEqual({
+            Event: 'F/S Return Match',
+            Site: 'Belgrade, Serbia JUG',
+            Date: '1992.11.04',
+            Round: '29',
+            White: 'Fischer, Robert J.',
+            Black: 'Spassky, Boris V.',
+            Result: '1/2-1/2',
+            Foo: 'Bar',
+            WhiteElo: '1500 USCF',
+            BlackElo: '2000',
+            TimeControl: '40/3600:20/1800+30:900',
+        });
+    });
 });
