@@ -1,10 +1,9 @@
 /**
- * Author and copyright: Stefan Haack (https://shaack.com)
+ * Author and copyright: Stefan Haack (https://shaack.com), Jack Stenglein
  * Repository: https://github.com/shaack/cm-pgn
  * License: MIT, see file 'LICENSE'
  */
 import { Pgn } from '../Pgn';
-import { TAGS } from '../Header';
 
 describe('Pgn', () => {
     it('should create an empty pgn', () => {
@@ -30,8 +29,8 @@ describe('Pgn', () => {
     hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33. f3 Bc8 34. Kf2 Bf5
     35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5 40. Rd6 Kc5 41. Ra6
     Nf2 42. g4 Bd3 43. Re6 1/2-1/2`;
-        const pgn = new Pgn(gamePgn);
-        expect(pgn.header.tags.Date).toBe('1992.11.04');
+        const pgn = new Pgn({ pgn: gamePgn });
+        expect(pgn.header.tags.Date?.value).toBe('1992.11.04');
     });
 
     it('should load a chess puzzle', () => {
@@ -49,8 +48,8 @@ describe('Pgn', () => {
     [FEN "r3r1k1/pp1qppb1/2p3p1/7p/3PpP2/BPP1P1Pb/P3Q1BP/3R1RK1 b - - 4 17"]
 
     17...Bg4 18. Qc2 Bxd1 19. Rxd1 0-1`;
-        const pgn = new Pgn(gamePgn);
-        expect(pgn.header.tags[TAGS.SetUp]).toBe('1');
+        const pgn = new Pgn({ pgn: gamePgn });
+        expect(pgn.header.tags.SetUp).toBe('1');
     });
 
     it('should load a game with SetUp and FEN', () => {
@@ -58,14 +57,15 @@ describe('Pgn', () => {
     [FEN "4k3/pppppppp/8/8/8/8/PPPPPPPP/4K3 w - - 0 1"]
 
     1. e4`;
-        const pgn = new Pgn(gamePgn);
-        expect(pgn.header.tags[TAGS.SetUp]).toBe('1');
+        const pgn = new Pgn({ pgn: gamePgn });
+        expect(pgn.header.tags.SetUp).toBe('1');
         expect(pgn.history.moves[0].fen).toBe('4k3/pppppppp/8/8/4P3/8/PPPP1PPP/4K3 b - - 0 1');
     });
 
     it('should parse comment containing "[" and "]"', () => {
         // https://github.com/DHTMLGoodies/dhtmlchess/blob/master/pgn/1001-brilliant-checkmates.pgn
-        const ignored = new Pgn(`[Event " White to move."]
+        const ignored = new Pgn({
+            pgn: `[Event " White to move."]
     [Site "?"]
     [Date "1998.??.??"]
     [Round "?"]
@@ -79,12 +79,13 @@ describe('Pgn', () => {
     [EventDate "1998.??.??"]
 
     1. Rc8 {[%emt 0:00:05]} Rxc8 {[%emt 0:00:01]} 2. Rxc8 {[%emt 0:00:01]} Qxc8 {
-    } 3. Qe7#  1-0`);
-        // console.log(pgn.toString());
+    } 3. Qe7#  1-0`,
+        });
     });
 
     it('should parse header and history', () => {
-        const ignored = new Pgn(`[Event "Bled-Zagreb-Belgrade Candidates"]
+        const ignored = new Pgn({
+            pgn: `[Event "Bled-Zagreb-Belgrade Candidates"]
     [Site "Bled, Zagreb & Belgrade YUG"]
     [Date "1959.09.18"]
     [Round "8"]
@@ -151,11 +152,13 @@ describe('Pgn', () => {
     26. Kxe4 Bb7 {, wonach Schwarz mit seinem Läuferpaar noch etwas Widerstand
     leisten könnte, gönnt Tal seinem großen Gegner. Nach dem Textzug dagegen wird
     sich ein schwarzer Läufer tauschen müssen, und Smyslov sah ein, dass es sinnlos
-    wäre, diese Stellung gegen Tal weiterzuspielen.} ) 1-0`);
+    wäre, diese Stellung gegen Tal weiterzuspielen.} ) 1-0`,
+        });
         //console.log(pgn);
     });
     it('should parse stappenmethode weekly.pgn', () => {
-        const pgn = new Pgn(`[Event "?"]
+        const pgn = new Pgn({
+            pgn: `[Event "?"]
     [Site "?"]
     [Date "2012.??.??"]
     [Round "?"]
@@ -168,27 +171,31 @@ describe('Pgn', () => {
     [FEN "r1b1Q1k1/1p2bpqp/8/8/p1Pr4/4PpN1/P6P/R4RK1 b - - 0 1"]
 
     1... Bf8 (1... Qf8? 2. Qxf8+ Bxf8 3. exd4) 2. exd4 Qxd4+ {%Q} 3. Kh1 Bh3
-    0-1`);
+    0-1`,
+        });
         expect(5).toBe(pgn.history.moves.length);
-        expect('Schaak opheffen').toBe(pgn.header.tags[TAGS.White]);
-        expect('app 037-1').toBe(pgn.header.tags[TAGS.Annotator]);
+        expect('Schaak opheffen').toBe(pgn.header.tags.White);
+        expect('app 037-1').toBe(pgn.header.tags.Annotator);
     });
+
     it('should parse a pgn with only the header', () => {
         const gamePgn = `[SetUp "1"]
-    [FEN "4k3/pppppppp/8/8/8/8/PPPPPPPP/4K3 w - - 0 1"]`;
-        const ignored = new Pgn(gamePgn);
+[FEN "4k3/pppppppp/8/8/8/8/PPPPPPPP/4K3 w - - 0 1"]`;
+        const ignored = new Pgn({ pgn: gamePgn });
     });
+
     it('should render a simple PGN', () => {
-        const gamePgn = `[SetUp "1"]
+        const gamePgn = `[Result "1-0"]
+[SetUp "1"]
 [FEN "4k3/pppppppp/8/8/8/8/PPPPPPPP/4K3 w - - 0 1"]
-[Result "1-0"]
 
 1. e4 (1. d4 { Die Variante } 1... d5) 1... e5 { Ein Kommentar } 2. a3 1-0`;
-        const pgn = new Pgn(gamePgn);
+        const pgn = new Pgn({ pgn: gamePgn });
         console.log(gamePgn);
         console.log(pgn.render());
         expect(pgn.render()).toBe(gamePgn);
     });
+
     it('should parse pgn from https://github.com/shaack/cm-pgn/issues/8', () => {
         const pgnString = `[Event "?"]
     [Site "?"]
@@ -207,20 +214,22 @@ describe('Pgn', () => {
     h5 16. h3 hxg4 17. hxg4 Kg7 18. Ng3 Bb6 19. Be7 Kg6 20. c4 Bf2 21. Nf5 Kg5 22.
     Nd6 Kxg4 23. c5 Kf3 24. c6 e4 25. c7 Bd4 26. Nb5 Be5 27. Bd6 e3 28. Bxe5 fxe5
     29. Nd6 Kf2  *`;
-        const pgn = new Pgn(pgnString);
+        const pgn = new Pgn({ pgn: pgnString });
         expect(pgn.history.moves.length).toBe(58);
         const rendered = pgn.render();
-        const parsedAgain = new Pgn(rendered);
+        const parsedAgain = new Pgn({ pgn: rendered });
         const renderedAgain = parsedAgain.render();
         expect(rendered).toBe(renderedAgain);
     });
     it('should parse the example in the README.md', () => {
-        const pgn = new Pgn(`[Site "Berlin"]
+        const pgn = new Pgn({
+            pgn: `[Site "Berlin"]
     [Date "1989.07.02"]
     [White "Haack, Stefan"]
     [Black "Maier, Karsten"]
 
-    1. e4 e5 (e6) 2. Nf3 $1 {Great move!} Nc6 *`);
+    1. e4 e5 (e6) 2. Nf3 $1 {Great move!} Nc6 *`,
+        });
         const history = pgn.history;
         expect(4).toBe(history.moves.length);
         expect(history.moves[0].san).toBe('e4');
@@ -237,8 +246,8 @@ describe('Pgn', () => {
         console.log(pgn);
     });
     it('should parse sloppy PGN from https://github.com/shaack/cm-pgn/issues/9', () => {
-        const ignored = new Pgn(
-            `[Event "?"]
+        const ignored = new Pgn({
+            pgn: `[Event "?"]
     [Site "?"]
     [Date "?"]
     [Round "?"]
@@ -275,8 +284,7 @@ describe('Pgn', () => {
     d4 d5 (8... f3 9. Bc4+ Kg7 10. gxf3 Be7 11. Be3) 9.
     Bxf4 Nf6 10. Nxd5 (10. exd5
     Nxd5 (10... Bd6 11. Bxd6 Qxd6 12. dxc6) 11. Bc4 Be6 12. O-O) 10... Nxd5 11. Bc4 Be6 12. exd5 Bxd5 13. O-O *`,
-            { sloppy: true }
-        );
+        });
     });
 
     it('should read and return puzzle PGN', () => {
@@ -301,7 +309,7 @@ describe('Pgn', () => {
 { game comment }
 12... Rxe2 $2 { this is a trick problem :-) Re2 doesn't work so black should play Nf8 with equality } (12... Nf8 $10) (12... Bxf4 $10) 13. Qxe2 Bxf4 14. Qe4 $1 $18 { whoops! } 14... Qc7 15. Qh7+ Kf8 16. Rae1 Ne5 17. dxe5 fxe5 18. Qh8+ Ke7 19. Qxh4+ f6 20. Qxf4 { 1-0 White wins. } 1-0`;
 
-        const pgn = new Pgn(pgnString);
+        const pgn = new Pgn({ pgn: pgnString });
         expect(pgn.render()).toBe(pgnString);
     });
 
@@ -364,7 +372,7 @@ Black's pieces ready to invade it is just a matter of time before Gligoric's
 attack pays off. } { [%csl Re4][%cal Gg6e4,Gd8e7,Ge7h7] } 36. Rc4 Qe7 37. Bc3 Qh7 38. Qe2 Rh4 39. Kf2 f3! { The final
 break. } 40. Qe3 (40. Qxf3 Rf4 $19) (40. gxf3 Rh2+ $19) (40. Kxf3 Bh5+ $19) 40... Rf4 41. gxf3 Qh2+ 42. Ke1 Qh1+ 43. Ke2 Bh5 44. Kd2 Rxf3 45. Qg5+ Bg7 46. Kc2 Rf2+ 47. Bd2 Qd1+ 48. Kc3 Qa1+ { 0-1 Black wins. } (49. Kd3 Be2+ 50. Ke3 Rf3+ 51. Kxe2 Qf1#) 0-1`;
 
-        new Pgn(pgnString);
+        new Pgn({ pgn: pgnString });
     });
 
     it('should read and return PGN with newline in comments', () => {
@@ -390,7 +398,7 @@ break. } 40. Qe3 (40. Qxf3 Rf4 $19) (40. gxf3 Rh2+ $19) (40. Kxf3 Bh5+ $19) 40..
 12... Rxe2 $2 { this is a 
 trick problem :-) Re2 doesn't work so black should play Nf8 with equality } (12... Nf8 $10) (12... Bxf4 $10) 13. Qxe2 Bxf4 14. Qe4 $1 $18 { whoops! } 14... Qc7 15. Qh7+ Kf8 16. Rae1 Ne5 17. dxe5 fxe5 18. Qh8+ Ke7 19. Qxh4+ f6 20. Qxf4 { 1-0 White wins. } 1-0`;
 
-        const pgn = new Pgn(pgnString);
+        const pgn = new Pgn({ pgn: pgnString });
         expect(pgn.render()).toBe(pgnString);
     });
 });

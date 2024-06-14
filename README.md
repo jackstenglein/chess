@@ -1,38 +1,55 @@
-# cm-chess 
+# @jackstenglein/chess
 
-It is like [chess.js](https://github.com/jhlywa/chess.js) (and is based on an older version of chess.js), 
-but can handle history variations (tree-structured move history), 
-PGN header values, Nags and Comments.
+@jackstenglein/chess is a TypeScript chess library based on [chess.js](https://github.com/jhlywa/chess.js) and [cm-chess](https://github.com/shaack/cm-chess). It provides PGN/FEN loading; move generation/validation; variations, including reordering and promoting; tracking the current move and seeking through a PGN; PGN header values; NAGs; comments; check/checkmate/stalemate detection; null moves; and more.
 
-## Install
+This library is used to power the [ChessDojo](https://www.chessdojo.club) annotation editor and tactics tests.
 
-`npm install cm-chess`
+## Installation
+
+Run the following command to install the most recent version from NPM:
+
+```bash
+npm install @jackstenglein/chess
+```
+
+## Importing
+
+```typescript
+import { Chess } from '@jackstenglein/chess';
+```
+
+## Example Code
+
+The code below plays a random game of chess:
+
+```typescript
+import { Chess } from '@jackstenglein/chess';
+
+const chess = new Chess();
+
+while (!chess.isGameOver()) {
+    const moves = chess.moves();
+    const move = moves[Math.floor(Math.random() * moves.length)];
+    chess.move(move);
+}
+
+console.log(chess.renderPgn());
+```
+
+Also see the [tests](https://github.com/jackstenglein/chess/tree/main/src/__tests__) for further examples.
+
+## User Interface
+
+This is a headless library and does not include user interface elements. ChessDojo has successfully integrated this library with [Lichess Chessground](https://github.com/lichess-org/chessground).
 
 ## Features
 
-- It has a similar API to chess.js
-- It can handle history variations
-- It can add Nags, Comments and Annotations
-- It is used by the 7,000 users of [chessmail](https://www.chessmail.de) (it works)
+It has a similar API to [chess.js](https://github.com/jhlywa/chess.js) and provides much of the same functionality. However, it also offers additional features:
 
-## API
-
-For documentation, see the jsdoc annotations in [Chess.js](https://github.com/shaack/cm-chess/blob/master/src/Chess.js).
-
-cm-chess uses [cm-pgn](https://github.com/shaack/cm-pgn) for the
-header and history, therefore you have also the full API of **cm-pgn**.
-
-If I have some time, I will write a better documentation here in this README. :) 
-
-## Examples
-
-See the unit tests for usage examples
-https://github.com/shaack/cm-chess/blob/master/test/TestChess.js
-
-And also the unit tests of cm-pgn
-https://github.com/shaack/cm-pgn/tree/master/test
-
-## Test
-
-[Run the unit tests](https://shaack.com/projekte/cm-chess/test/)
-
+-   Handles variations in addition to the mainline PGN
+-   Handles Chessbase-style null moves (Z0)
+-   Handles NAGs and comments
+-   Keeps track of the "current move" and allows seeking/traversing through the PGN
+-   Allows fetching/setting known PGN headers, as well as arbitrary PGN headers
+-   Allows fetching/setting known PGN commands, as well as arbitrary PGN commands
+-   Allows subscribing to specific events and receiving notifications in a callback
