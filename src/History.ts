@@ -2,26 +2,26 @@ import { PgnMove, DiagramComment } from '@jackstenglein/pgn-parser';
 import { Chess, Move as ChessJsMove, KING, Square } from 'chess.js';
 import { CandidateMove, FEN, MovesOptions } from './Chess';
 
-export type Move<UserData> = ChessJsMove & {
+export type Move = ChessJsMove & {
     /** The next mainline move after this one, if it exists. */
-    next: Move<UserData> | null;
+    next: Move | null;
 
     /** The ply of the move. */
     ply: number;
 
     /** The previous move, if it exists. */
-    previous: Move<UserData> | null;
+    previous: Move | null;
 
     /**
      * An array of the move's variation. If the move is not in the mainline,
      * the array starts at the first non-mainline move.
      */
-    variation: Move<UserData>[];
+    variation: Move[];
 
     /**
      * An array of non-mainline moves that are alternatives to this move.
      */
-    variations: Move<UserData>[][];
+    variations: Move[][];
 
     /** The FEN after this move is played. */
     fen: string;
@@ -72,7 +72,7 @@ export type Move<UserData> = ChessJsMove & {
     commentDiag?: DiagramComment;
 
     /** Optional, user-defined data associated with the move. */
-    userData?: UserData;
+    userData?: unknown;
 };
 
 /** The notation for a null move. */
@@ -89,10 +89,10 @@ export interface HistoryRenderOptions {
     skipNags?: boolean;
 }
 
-export class History<UserData> {
+export class History {
     setUpFen: string;
     setUpPly: number;
-    moves: Move<UserData>[] = [];
+    moves: Move[] = [];
 
     /**
      * Creates a new History object.
@@ -135,14 +135,8 @@ export class History<UserData> {
      * @param strict Whether to use the strict SAN praser. Defaults to false.
      * @returns The list of Moves.
      */
-    traverse(
-        pgnMoves: PgnMove[],
-        fen: string,
-        parent: Move<UserData> | null = null,
-        ply = 1,
-        strict = false
-    ): Move<UserData>[] {
-        const moves: Move<UserData>[] = [];
+    traverse(pgnMoves: PgnMove[], fen: string, parent: Move | null = null, ply = 1, strict = false): Move[] {
+        const moves: Move[] = [];
 
         try {
             const chess = new Chess(fen);
@@ -195,8 +189,8 @@ export class History<UserData> {
      * @param chess The Chess.js instance.
      * @returns The Move object for the given data.
      */
-    getMove(ply: number, pgnMove: PgnMove, chessJsMove: ChessJsMove, chess: Chess): Move<UserData> {
-        const move: Move<UserData> = {
+    getMove(ply: number, pgnMove: PgnMove, chessJsMove: ChessJsMove, chess: Chess): Move {
+        const move: Move = {
             ...chessJsMove,
             previous: null,
             next: null,
@@ -229,8 +223,8 @@ export class History<UserData> {
      * @param move The move to get the history for.
      * @return The history of the given move, including the move itself.
      */
-    historyToMove(move: Move<UserData>): Move<UserData>[] {
-        const moves: Move<UserData>[] = [];
+    historyToMove(move: Move): Move[] {
+        const moves: Move[] = [];
         let pointer = move;
         moves.push(pointer);
         while (pointer.previous) {
@@ -249,11 +243,7 @@ export class History<UserData> {
      * @param strict Whether to use the strict notation parser. Defaults to false.
      * @returns The Move object if legal, or null if illegal.
      */
-    validateMove(
-        notation: CandidateMove,
-        previous: Move<UserData> | null = null,
-        strict = false
-    ): Move<UserData> | null {
+    validateMove(notation: CandidateMove, previous: Move | null = null, strict = false): Move | null {
         const chess = new Chess();
         if (previous) {
             chess.load(previous.fen);
@@ -280,7 +270,7 @@ export class History<UserData> {
      * @param strict Whether to use the strict notation parser. Defaults to false.
      * @returns The added Move object.
      */
-    addMove(notation: CandidateMove, previous: Move<UserData> | null = null, strict = false): Move<UserData> {
+    addMove(notation: CandidateMove, previous: Move | null = null, strict = false): Move {
         const move = this.validateMove(notation, previous, strict);
         if (!move) {
             throw new Error(`Invalid move: ${notation.toString()} from previous ${previous}`);
@@ -314,7 +304,7 @@ export class History<UserData> {
      * @returns The history as a PGN string.
      */
     render(options?: HistoryRenderOptions) {
-        const renderVariation = (variation: Move<UserData>[], needReminder = false) => {
+        const renderVariation = (variation: Move[], needReminder = false) => {
             let result = '';
             for (let move of variation) {
                 if (!options?.skipComments && move.commentMove) {

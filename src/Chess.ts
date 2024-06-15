@@ -1,7 +1,7 @@
 import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece, Move as ChessJsMove } from 'chess.js';
 import { Move, getNullMove } from './History';
 import { Pgn, RenderOptions } from './Pgn';
-import { DiagramComment, Tags } from '@jackstenglein/pgn-parser';
+import { DiagramComment } from '@jackstenglein/pgn-parser';
 import { Header } from './Header';
 
 export { SQUARES, Square, PieceSymbol };
@@ -44,15 +44,15 @@ export enum EventType {
     PromoteVariation = 'PROMOTE_VARIATION',
 }
 
-export interface Event<UserData> {
+export interface Event {
     type: EventType;
     fen?: string;
     pgn?: string;
-    move?: Move<UserData> | null;
-    previousMove?: Move<UserData> | null;
-    mainlineMove?: Move<UserData> | null;
-    variantRoot?: Move<UserData> | null;
-    variantParent?: Move<UserData> | null;
+    move?: Move | null;
+    previousMove?: Move | null;
+    mainlineMove?: Move | null;
+    variantRoot?: Move | null;
+    variantParent?: Move | null;
     notation?: string | { to: string; from: string; promotion?: string };
     commentType?: CommentType;
     commentText?: string;
@@ -63,12 +63,12 @@ export interface Event<UserData> {
 }
 
 /** An observer that subscribes to events from the Chess instance. */
-export interface Observer<UserData> {
+export interface Observer {
     /** The types of events the observer is notified for. */
     types: EventType[];
 
     /** The callback function that is notified of events. */
-    handler: (event: Event<UserData>) => void;
+    handler: (event: Event) => void;
 }
 
 /**
@@ -77,7 +77,7 @@ export interface Observer<UserData> {
  * @param observers The list of observers to potentially notify.
  * @param event The event to send to the observers.
  */
-function publishEvent<UserData>(observers: Observer<UserData>[], event: Event<UserData>) {
+function publishEvent(observers: Observer[], event: Event) {
     for (const observer of observers) {
         if (observer.types.includes(event.type)) {
             observer.handler(event);
@@ -139,10 +139,10 @@ export function normalizeFen(fen: string): string {
  * Like chess.js, but handles variations. Uses chess.js for validation and
  * @jackstenglein/pgn-parser for the history and PGN header.
  */
-export class Chess<UserData = undefined> {
-    pgn: Pgn<UserData>;
-    observers: Observer<UserData>[];
-    _currentMove: Move<UserData> | null;
+export class Chess {
+    pgn: Pgn;
+    observers: Observer[];
+    _currentMove: Move | null;
     chessjs: ChessJs;
 
     /**
@@ -169,7 +169,7 @@ export class Chess<UserData = undefined> {
      * Subscribes the given observer to events.
      * @param observer The observer to add.
      */
-    addObserver(observer: Observer<UserData>) {
+    addObserver(observer: Observer) {
         this.observers.push(observer);
     }
 
@@ -177,7 +177,7 @@ export class Chess<UserData = undefined> {
      * Unsubscribes the given observer from events.
      * @param observer The observer to remove.
      */
-    removeObserver(observer: Observer<UserData>) {
+    removeObserver(observer: Observer) {
         this.observers = this.observers.filter((o) => o !== observer);
     }
 
@@ -267,7 +267,7 @@ export class Chess<UserData = undefined> {
     /**
      * @returns A list of the mainline moves in the game history.
      */
-    history(): Move<UserData>[] {
+    history(): Move[] {
         return this.pgn.history.moves;
     }
 
@@ -281,7 +281,7 @@ export class Chess<UserData = undefined> {
     /**
      * @returns The first move of the main variation or `null` if no move was made.
      */
-    firstMove(): Move<UserData> | null {
+    firstMove(): Move | null {
         if (this.pgn.history.moves.length > 0) {
             return this.pgn.history.moves[0];
         }
@@ -291,7 +291,7 @@ export class Chess<UserData = undefined> {
     /**
      * @returns The last move of the main variation or `null` if no move was made.
      */
-    lastMove(): Move<UserData> | null {
+    lastMove(): Move | null {
         if (this.pgn.history.moves.length > 0) {
             return this.pgn.history.moves[this.pgn.history.moves.length - 1];
         }
@@ -302,7 +302,7 @@ export class Chess<UserData = undefined> {
      * Gets the current Move.
      * @returns The current Move or null if at the starting position.
      */
-    currentMove(): Move<UserData> | null {
+    currentMove(): Move | null {
         return this._currentMove;
     }
 
@@ -310,7 +310,7 @@ export class Chess<UserData = undefined> {
      * Returns the next mainline Move from the provided Move.
      * @param move The move to get the next move from. Defaults to the current move.
      */
-    nextMove(move = this._currentMove): Move<UserData> | null {
+    nextMove(move = this._currentMove): Move | null {
         if (!move) {
             if (this.pgn.history.moves.length === 0) {
                 return null;
@@ -324,7 +324,7 @@ export class Chess<UserData = undefined> {
      * Returns the previous Move from the provided move.
      * @param move The move to get the previous Move from. Defaults to the current move.
      */
-    previousMove(move = this._currentMove): Move<UserData> | null {
+    previousMove(move = this._currentMove): Move | null {
         if (!move) {
             return null;
         }
@@ -338,7 +338,7 @@ export class Chess<UserData = undefined> {
      * If non-null, it must exist in the pgn history.
      * @returns The new current Move.
      */
-    seek(move: Move<UserData> | null): Move<UserData> | null {
+    seek(move: Move | null): Move | null {
         if (move) {
             this.chessjs.load(move.fen);
         } else {
@@ -363,7 +363,7 @@ export class Chess<UserData = undefined> {
      * @param move The Move to check.
      * @returns True if the candidate move is the same as the Move.
      */
-    candidateMatches(candidate: CandidateMove, move: Move<UserData> | null): boolean {
+    candidateMatches(candidate: CandidateMove, move: Move | null): boolean {
         if (!move) {
             return false;
         }
@@ -400,7 +400,7 @@ export class Chess<UserData = undefined> {
      * @param move The Move to check from. Defaults to the current Move.
      * @returns The provided candidate move only if it already exists in the Move's variations.
      */
-    getVariation(candidate: CandidateMove, move = this._currentMove): Move<UserData> | null {
+    getVariation(candidate: CandidateMove, move = this._currentMove): Move | null {
         const nextMove = this.nextMove(move);
         if (!nextMove) {
             return null;
@@ -434,7 +434,7 @@ export class Chess<UserData = undefined> {
      * @param parent The potential parent to check.
      * @param move The move to check. Defaults to the current move.
      */
-    isDescendant(parent: Move<UserData>, move = this._currentMove): boolean {
+    isDescendant(parent: Move, move = this._currentMove): boolean {
         if (!move) {
             return false;
         }
@@ -452,7 +452,7 @@ export class Chess<UserData = undefined> {
         }
 
         const parentRoot = parent.variation;
-        let moveRoot: Move<UserData>[] | undefined = move.variation;
+        let moveRoot: Move[] | undefined = move.variation;
         do {
             if (moveRoot === parentRoot) {
                 return true;
@@ -482,12 +482,12 @@ export class Chess<UserData = undefined> {
             existingOnly,
             skipSeek,
         }: {
-            previousMove?: Move<UserData> | null;
+            previousMove?: Move | null;
             strict?: boolean;
             existingOnly?: boolean;
             skipSeek?: boolean;
         } = {}
-    ): Move<UserData> | null {
+    ): Move | null {
         const nextMove = this.nextMove(previousMove);
         if (this.candidateMatches(candidate, nextMove)) {
             if (skipSeek) {
@@ -554,10 +554,10 @@ export class Chess<UserData = undefined> {
             previousMove = this._currentMove,
             strict,
         }: {
-            previousMove?: Move<UserData> | null;
+            previousMove?: Move | null;
             strict?: boolean;
         } = {}
-    ): Move<UserData> | null {
+    ): Move | null {
         return this.pgn.history.validateMove(candidate, previousMove, strict);
     }
 
@@ -615,7 +615,7 @@ export class Chess<UserData = undefined> {
      * @param move The move to get the variant parent of. Defaults to the current move.
      * @returns The variant parent of the provided move.
      */
-    getVariantParent(move = this._currentMove): Move<UserData> | null {
+    getVariantParent(move = this._currentMove): Move | null {
         if (!move) {
             return null;
         }
@@ -669,14 +669,14 @@ export class Chess<UserData = undefined> {
             return;
         }
 
-        let nextVariantRoot: Move<UserData> | undefined = move.variation[0];
-        let nextVariantParent: Move<UserData> | null | undefined = this.getVariantParent(move);
+        let nextVariantRoot: Move | undefined = move.variation[0];
+        let nextVariantParent: Move | null | undefined = this.getVariantParent(move);
         if (!nextVariantParent) {
             return;
         }
 
-        let variantRoot: Move<UserData>;
-        let variantParent: Move<UserData>;
+        let variantRoot: Move;
+        let variantParent: Move;
 
         do {
             variantRoot = nextVariantRoot;

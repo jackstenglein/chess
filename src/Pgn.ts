@@ -19,9 +19,9 @@ export interface RenderOptions extends HistoryRenderOptions {
     skipHeader?: boolean;
 }
 
-export class Pgn<UserData> {
+export class Pgn {
     header: Header;
-    history: History<UserData>;
+    history: History;
     gameComment: DiagramComment;
 
     /**
