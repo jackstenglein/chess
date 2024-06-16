@@ -324,6 +324,34 @@ describe('Chess - Making Moves', () => {
         expect(move).toBe(null);
     });
 
+    it('should allow null moves with Z0', () => {
+        const chess = new Chess();
+        chess.move('Z0');
+
+        expect(chess.fen()).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
+    });
+
+    it('should allow null moves with from/to', () => {
+        const chess = new Chess();
+        chess.move({ from: 'e1', to: 'e8' });
+
+        expect(chess.fen()).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
+    });
+
+    it('should disable null moves with instance prop', () => {
+        const chess = new Chess({ disableNullMoves: true });
+        let move = chess.move('Z0');
+        expect(move).toBe(null);
+        move = chess.move({ from: 'e1', to: 'e8' });
+        expect(move).toBe(null);
+    });
+
+    it('should override disable null moves with function prop', () => {
+        const chess = new Chess({ disableNullMoves: true });
+        let move = chess.move('Z0', { disableNullMoves: false });
+        expect(chess.fen()).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
+    });
+
     it('should validate Moves', () => {
         const chess = new Chess();
         expect(chess.validateMove('e4')).toBeTruthy();

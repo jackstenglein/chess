@@ -86,7 +86,7 @@ function publishEvent(observers: Observer[], event: Event) {
 }
 
 /** A potential move to validate or play. */
-export type CandidateMove = string | { from: string; to: string; promotion?: string };
+export type CandidateMove = string | { from: Square; to: Square; promotion?: string };
 
 export interface MovesOptions {
     /** The square to get moves for. */
@@ -95,7 +95,7 @@ export interface MovesOptions {
     /** The piece to get moves for. */
     piece?: PieceSymbol;
 
-    /** Whether to disable null moves. */
+    /** Whether to disable null moves. Overrides the Chess instance prop. */
     disableNullMoves?: boolean;
 }
 
@@ -110,6 +110,9 @@ export interface ChessProps {
 
     /** The FEN to initialize with. */
     fen?: string;
+
+    /** Whether to disable null moves. */
+    disableNullMoves?: boolean;
 }
 
 /**
@@ -144,17 +147,19 @@ export class Chess {
     observers: Observer[];
     _currentMove: Move | null;
     chessjs: ChessJs;
+    disableNullMoves: boolean;
 
     /**
      * Constructs a new Chess instance from the given PGN or FEN.
      * If both PGN and FEN are provided, PGN takes priority and FEN is ignored.
      * @param props The props to construct the Chess instance with.
      */
-    constructor({ fen, pgn }: ChessProps = {}) {
+    constructor({ fen, pgn, disableNullMoves = false }: ChessProps = {}) {
         this.observers = [];
         this.pgn = new Pgn({});
         this._currentMove = null;
         this.chessjs = new ChessJs();
+        this.disableNullMoves = disableNullMoves;
 
         if (pgn) {
             this.loadPgn(pgn);
@@ -472,6 +477,7 @@ export class Chess {
      * @param strict Whether to use the strict SAN parser. Defaults to false.
      * @param existingOnly Return null if the Move doesn't already exist. Defaults to false.
      * @param skipSeek If true, return the move but do not update the current move and do not publish an event. Defaults to false.
+     * @param disableNullMoves Whether to disable null moves. Defaults to the Chess instance's prop.
      * @returns The created or existing Move, if successful. Null if not successful.
      */
     move(
@@ -481,11 +487,13 @@ export class Chess {
             strict,
             existingOnly,
             skipSeek,
+            disableNullMoves = this.disableNullMoves,
         }: {
             previousMove?: Move | null;
             strict?: boolean;
             existingOnly?: boolean;
             skipSeek?: boolean;
+            disableNullMoves?: boolean;
         } = {}
     ): Move | null {
         const nextMove = this.nextMove(previousMove);
@@ -520,7 +528,11 @@ export class Chess {
 
         // The move doesn't already exist as the mainline or a continuation, so we add it to the PGN.
         try {
-            const moveResult = this.pgn.history.addMove(candidate, previousMove, strict);
+            const moveResult = this.pgn.history.addMove(candidate, {
+                previous: previousMove,
+                disableNullMoves,
+                strict,
+            });
             if (skipSeek) {
                 return moveResult;
             }
@@ -545,6 +557,7 @@ export class Chess {
      * or create events.
      * @param candidate The move to validate.
      * @param previousMove The move to play from. Defaults to the current move.
+     * @param disableNullMoves Whether to disable null moves. Defaults to the Chess instance's prop.
      * @param strict Whether to use the strict SAN parser. Defaults to false.
      * @returns The move object or null if not valid.
      */
@@ -552,13 +565,15 @@ export class Chess {
         candidate: CandidateMove,
         {
             previousMove = this._currentMove,
+            disableNullMoves = this.disableNullMoves,
             strict,
         }: {
             previousMove?: Move | null;
+            disableNullMoves?: boolean;
             strict?: boolean;
         } = {}
     ): Move | null {
-        return this.pgn.history.validateMove(candidate, previousMove, strict);
+        return this.pgn.history.validateMove(candidate, { previous: previousMove, disableNullMoves, strict });
     }
 
     /**
@@ -1043,7 +1058,7 @@ export class Chess {
     moves(options: MovesOptions = {}, move = this._currentMove): ChessJsMove[] {
         this.chessjs.load(this.fen(move));
         const moves = this.chessjs.moves({ ...options, verbose: true });
-        const nullMove = getNullMove(this.chessjs, options);
+        const nullMove = getNullMove(this.chessjs, { disableNullMoves: this.disableNullMoves, ...options });
         if (nullMove) {
             moves.push(nullMove);
         }

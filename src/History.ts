@@ -240,10 +240,18 @@ export class History {
      * returned.
      * @param notation Either a SAN string or an object representing the move.
      * @param previous The previous Move to play from or null to play from the starting position.
+     * @param disableNullMoves Whether to disable null moves. If true and a null move is passed, null is returned.
      * @param strict Whether to use the strict notation parser. Defaults to false.
      * @returns The Move object if legal, or null if illegal.
      */
-    validateMove(notation: CandidateMove, previous: Move | null = null, strict = false): Move | null {
+    validateMove(
+        notation: CandidateMove,
+        {
+            previous,
+            disableNullMoves = false,
+            strict = false,
+        }: { previous: Move | null; disableNullMoves?: boolean; strict?: boolean }
+    ): Move | null {
         const chess = new Chess();
         if (previous) {
             chess.load(previous.fen);
@@ -252,7 +260,9 @@ export class History {
         }
 
         try {
-            const chessJsMove = notation === nullMoveNotation ? getNullMove(chess) : chess.move(notation, { strict });
+            const chessJsMove = isNullMove(notation, chess)
+                ? getNullMove(chess, { disableNullMoves })
+                : chess.move(notation, { strict });
             if (chessJsMove) {
                 return this.getMove(previous ? previous.ply + 1 : this.setUpPly, {} as PgnMove, chessJsMove, chess);
             }
@@ -267,11 +277,19 @@ export class History {
      * an error is thrown.
      * @param notation Either a SAN string or an object representing the move.
      * @param previous The previous Move to play from or null to play from the starting position.
+     * @param disableNullMoves Whether to disable null moves. If true and a null move is passed, an error is thrown.
      * @param strict Whether to use the strict notation parser. Defaults to false.
      * @returns The added Move object.
      */
-    addMove(notation: CandidateMove, previous: Move | null = null, strict = false): Move {
-        const move = this.validateMove(notation, previous, strict);
+    addMove(
+        notation: CandidateMove,
+        {
+            previous,
+            disableNullMoves = false,
+            strict = false,
+        }: { previous: Move | null; disableNullMoves?: boolean; strict?: boolean }
+    ): Move {
+        const move = this.validateMove(notation, { previous, disableNullMoves, strict });
         if (!move) {
             throw new Error(`Invalid move: ${notation.toString()} from previous ${previous}`);
         }
@@ -366,6 +384,27 @@ function switchTurn(fen: string): string {
 
     tokens[1] = tokens[1] === 'w' ? 'b' : 'w';
     return tokens.join(' ');
+}
+
+/**
+ * Returns true if the provided candidate is a null move (either the Z0
+ * notation or moving the kings onto each other).
+ * @param candidate The candidate move to check.
+ * @param chess The Chess.js instance.
+ * @returns True if the candidate is a null move.
+ */
+export function isNullMove(candidate: CandidateMove, chess: Chess): boolean {
+    if (typeof candidate === 'string') {
+        return candidate === nullMoveNotation;
+    }
+
+    const from = chess.get(candidate.from);
+    if (from.type !== KING || from.color !== chess.turn()) {
+        return false;
+    }
+
+    const to = chess.get(candidate.to);
+    return to.type === KING && to.color !== chess.turn();
 }
 
 /**
