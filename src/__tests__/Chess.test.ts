@@ -516,7 +516,6 @@ describe('Chess - Promoting Variations', () => {
         expect(e6?.variations[1][0].san).toBe('c6');
 
         chess.promoteVariation(c6);
-        console.log(chess.pgn.render());
 
         expect(chess.nextMove()?.san).toBe('e6');
         expect(e6?.variations[0][0].san).toBe('c6');
@@ -612,8 +611,6 @@ describe('Chess - Promoting Variations', () => {
         expect(e4?.variations).toHaveLength(0);
         expect(chess.firstMove()?.san).toBe('d4');
         expect(chess.isInMainline(d4)).toBeTruthy();
-
-        console.log(chess.pgn.render());
     });
 });
 
@@ -643,20 +640,20 @@ describe('Chess - Rendering', () => {
         chess.setCommand('clk', '30:40');
 
         const pgn = chess.renderPgn();
-        expect(pgn).toBe('\n1. e4 { [%clk 00:30:40] }');
+        expect(pgn).toBe('\n1. e4 { [%clk 00:30:40] } *');
     });
 
     it('renders correct PGN for no moves', () => {
         const chess = new Chess({ fen: 'r5k1/pp2bppp/2p1pn2/3rN2q/5QP1/2BP4/PP2PP1P/R4RK1 b - - 0 1' });
         expect(chess.renderPgn()).toBe(
-            '[FEN "r5k1/pp2bppp/2p1pn2/3rN2q/5QP1/2BP4/PP2PP1P/R4RK1 b - - 0 1"]\n[SetUp "1"]\n\n'
+            '[FEN "r5k1/pp2bppp/2p1pn2/3rN2q/5QP1/2BP4/PP2PP1P/R4RK1 b - - 0 1"]\n[SetUp "1"]\n\n*'
         );
     });
 
     it('renders blank PGN', () => {
         const chess = new Chess({ pgn: '' });
         chess.setHeader('White', 'Test');
-        expect(chess.renderPgn()).toBe('[White "Test"]\n\n');
+        expect(chess.renderPgn()).toBe('[White "Test"]\n\n*');
     });
 });
 

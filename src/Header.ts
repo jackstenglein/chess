@@ -93,6 +93,17 @@ export class Header {
     }
 
     /**
+     * @returns The headers as a record from the header name to the raw value.
+     */
+    valueMap(): Record<string, string> {
+        const result: Record<string, string> = {};
+        for (const tag in this.tags) {
+            result[tag] = this.getRawValue(tag);
+        }
+        return result;
+    }
+
+    /**
      * Returns the tags as a PGN header string. If present, the seven tag roster
      * always appears first, in the order specified by the PGN standard.
      * @returns The tags as a PGN header string.
@@ -114,16 +125,5 @@ export class Header {
         }
 
         return rendered;
-    }
-
-    /**
-     * @returns The headers as a record from the header name to the raw value.
-     */
-    valueMap(): Record<string, string> {
-        const result: Record<string, string> = {};
-        for (const tag in this.tags) {
-            result[tag] = this.getRawValue(tag);
-        }
-        return result;
     }
 }

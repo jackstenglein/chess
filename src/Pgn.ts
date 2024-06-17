@@ -66,6 +66,17 @@ export class Pgn {
     }
 
     /**
+     * @returns The result of the game, in compliance with the PGN move text standard.
+     */
+    renderResult() {
+        const result = this.header.tags.Result;
+        if (result === '1-0' || result === '0-1' || result === '1/2-1/2') {
+            return result;
+        }
+        return '*';
+    }
+
+    /**
      * Returns the PGN as a string, using the provided options.
      * @param options An object that controls which fields are included in the output.
      * @returns The PGN as a string.
@@ -78,9 +89,7 @@ export class Pgn {
         }
 
         let history = this.history.render({ skipComments, skipVariations, skipNags });
-        if (this.header.tags.Result) {
-            history += ' ' + this.header.tags.Result;
-        }
+        history += ' ' + this.renderResult();
         return result + wrap(history, width);
     }
 }
