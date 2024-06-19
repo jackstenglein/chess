@@ -1,6 +1,6 @@
 {
     "name": "@jackstenglein/chess",
-    "version": "2.1.3",
+    "version": "2.1.4",
     "description": "Built on top of chess.js and can handle variations (tree-structured move history)",
     "main": "dist/cjs/index.js",
     "module": "dist/esm/index.js",
@@ -30,7 +30,7 @@
     },
     "homepage": "https://github.com/jackstenglein/chess#readme",
     "dependencies": {
-        "@jackstenglein/pgn-parser": "^2.0.3",
+        "@jackstenglein/pgn-parser": "^2.0.5",
         "chess.js": "^1.0.0-beta.7"
     },
     "devDependencies": {

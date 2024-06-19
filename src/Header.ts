@@ -6,8 +6,6 @@
 
 import { parse, Tags, SevenTagRoster } from '@jackstenglein/pgn-parser';
 
-export { Tags, SevenTagRoster } from '@jackstenglein/pgn-parser';
-
 /**
  * Contains PGN header information.
  */
