@@ -56,6 +56,9 @@ export class Header {
         if (typeof tag === 'string') {
             return tag;
         }
+        if (typeof tag === 'number') {
+            return `${tag}`;
+        }
 
         return tag.value ?? '';
     }

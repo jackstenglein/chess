@@ -701,4 +701,11 @@ describe('Chess - Miscellaneous', () => {
         chess.move('Nxd5');
         expect(chess.currentMove()?.materialDifference).toBe(6);
     });
+
+    it('should set PlyCount header', () => {
+        const chess = new Chess();
+        chess.setHeader('PlyCount', '13');
+        expect(chess.header().getRawValue('PlyCount')).toBe('13');
+        expect(chess.header().valueMap().PlyCount).toBe('13');
+    });
 });

@@ -196,4 +196,11 @@ describe('Header', () => {
             TimeControl: '40/3600:20/1800+30:900',
         });
     });
+
+    it('should set PlyCount', () => {
+        const header = new Header({ pgn: `[TimeControl "40/3600:20/1800+30:900"]` });
+        header.setValue('PlyCount', '13');
+
+        expect(header.getValue('PlyCount')).toEqual({ value: '13', int: 13 });
+    });
 });
