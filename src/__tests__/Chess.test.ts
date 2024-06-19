@@ -338,6 +338,13 @@ describe('Chess - Making Moves', () => {
         expect(chess.fen()).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
     });
 
+    it('should get null move after en passant (#3)', () => {
+        const chess = new Chess({ fen: 'rnbqkbnr/p1pppppp/1p6/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2' });
+        chess.move('d5');
+        const moves = chess.moves();
+        expect(moves.length).toBe(32);
+    });
+
     it('should disable null moves with instance prop', () => {
         const chess = new Chess({ disableNullMoves: true });
         let move = chess.move('Z0');

@@ -373,6 +373,7 @@ export class History {
 
 /**
  * Returns the given FEN with the side to move switched to the opposite color.
+ * The en passant target square is also cleared.
  * @param fen The FEN to switch turns for.
  * @returns The same position but with the opposite color to move.
  */
@@ -383,6 +384,7 @@ function switchTurn(fen: string): string {
     }
 
     tokens[1] = tokens[1] === 'w' ? 'b' : 'w';
+    tokens[3] = '-';
     return tokens.join(' ');
 }
 
