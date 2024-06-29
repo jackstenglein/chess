@@ -206,17 +206,6 @@ describe('Chess - Move Traversal', () => {
         chess.loadPgn(pgn);
 
         expect(chess.firstMove()?.san).toBe('Qc5+');
-
-        // const secondMove = chess.seek(chess.nextMove());
-        // expect(secondMove?.san).toBe('Kd3');
-
-        // expect(chess.lastMove()?.san).toBe('Bc5#');
-        // expect(chess.lastMove()?.isCheckmate).toBe(true);
-
-        // chess.seek(chess.lastMove());
-        // expect(chess.isGameOver()).toBe(true);
-        // expect(chess.isCheckmate()).toBe(true);
-        // expect(chess.isDraw()).toBe(false);
     });
 
     it('should get last move', () => {
@@ -661,6 +650,25 @@ describe('Chess - Rendering', () => {
         const chess = new Chess({ pgn: '' });
         chess.setHeader('White', 'Test');
         expect(chess.renderPgn()).toBe('[White "Test"]\n\n*');
+    });
+
+    it('renders headers with escaped quotes', () => {
+        const chess = new Chess({
+            pgn: '[Event "Classicals: Algimantas Ogintas (1724) - Killane Cup with \\"The Town\\" OTB"]\n\n*',
+        });
+        expect(chess.header().tags.Event).toBe(
+            'Classicals: Algimantas Ogintas (1724) - Killane Cup with "The Town" OTB'
+        );
+
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe(
+            '[Event "Classicals: Algimantas Ogintas (1724) - Killane Cup with \\"The Town\\" OTB"]\n[Result "*"]\n\n*'
+        );
+
+        const newChess = new Chess({ pgn });
+        expect(newChess.header().tags.Event).toBe(
+            'Classicals: Algimantas Ogintas (1724) - Killane Cup with "The Town" OTB'
+        );
     });
 });
 

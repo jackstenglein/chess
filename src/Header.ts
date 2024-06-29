@@ -115,13 +115,13 @@ export class Header {
         for (const tag of SevenTagRoster) {
             const value = this.getRawValue(tag);
             if (value) {
-                rendered += `[${tag} "${value}"]\n`;
+                rendered += `[${tag} "${value.replace(/"/g, `\\"`)}"]\n`;
             }
         }
 
         for (const tag in this.tags) {
             if (!SevenTagRoster.includes(tag)) {
-                rendered += `[${tag} "${this.getRawValue(tag)}"]\n`;
+                rendered += `[${tag} "${this.getRawValue(tag).replace(/"/g, `\\"`)}"]\n`;
             }
         }
 
