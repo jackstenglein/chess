@@ -85,7 +85,7 @@ export class Header {
         if (!value) {
             delete this.tags[name];
         } else {
-            const newTags = parse(`[${name} "${value}"]`, { startRule: 'tags' }).tags || {};
+            const newTags = parse(`[${name} "${escapeValue(value)}"]`, { startRule: 'tags' }).tags || {};
             this.tags = {
                 ...this.tags,
                 ...newTags,
@@ -115,16 +115,20 @@ export class Header {
         for (const tag of SevenTagRoster) {
             const value = this.getRawValue(tag);
             if (value) {
-                rendered += `[${tag} "${value.replace(/"/g, `\\"`)}"]\n`;
+                rendered += `[${tag} "${escapeValue(value)}"]\n`;
             }
         }
 
         for (const tag in this.tags) {
             if (!SevenTagRoster.includes(tag)) {
-                rendered += `[${tag} "${this.getRawValue(tag).replace(/"/g, `\\"`)}"]\n`;
+                rendered += `[${tag} "${escapeValue(this.getRawValue(tag))}"]\n`;
             }
         }
 
         return rendered;
     }
+}
+
+function escapeValue(value: string): string {
+    return value.replace(/"/g, `\\"`);
 }

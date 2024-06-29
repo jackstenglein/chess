@@ -203,4 +203,11 @@ describe('Header', () => {
 
         expect(header.getValue('PlyCount')).toEqual({ value: '13', int: 13 });
     });
+
+    it('should escape header with quotes in it', () => {
+        const header = new Header({});
+        header.setValue('Foo', '"Bar"');
+
+        expect(header.getValue('Foo')).toBe('"Bar"');
+    });
 });
