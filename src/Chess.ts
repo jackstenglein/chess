@@ -963,9 +963,6 @@ export class Chess {
      * @param move The move to check for check. Defaults to the current move.
      */
     isCheck(move = this._currentMove): boolean {
-        if (move) {
-            return move.inCheck;
-        }
         this.chessjs.load(this.fen(move), { skipValidation: true });
         return this.chessjs.isCheck();
     }
@@ -975,9 +972,6 @@ export class Chess {
      * @param move The move to check for checkmate. Defaults to the current move.
      */
     isCheckmate(move = this._currentMove): boolean {
-        if (move) {
-            return move.isCheckmate;
-        }
         this.chessjs.load(this.fen(move), { skipValidation: true });
         return this.chessjs.isCheckmate();
     }
@@ -987,9 +981,6 @@ export class Chess {
      * @param move The move to check for a draw. Defaults to the current move.
      */
     isDraw(move = this._currentMove): boolean {
-        if (move) {
-            return move.isDraw;
-        }
         this.chessjs.load(this.fen(move), { skipValidation: true });
         return this.chessjs.isDraw();
     }
@@ -1000,9 +991,6 @@ export class Chess {
      * @param move The move to check. Defaults to the current move.
      */
     isGameOver(move = this._currentMove): boolean {
-        if (move) {
-            return move.gameOver;
-        }
         this.chessjs.load(this.fen(move), { skipValidation: true });
         return this.chessjs.isGameOver();
     }
@@ -1012,9 +1000,6 @@ export class Chess {
      * @param move The move to check for insufficient material. Defaults to the current move.
      */
     isInsufficientMaterial(move = this._currentMove): boolean {
-        if (move) {
-            return move.isInsufficientMaterial;
-        }
         this.chessjs.load(this.fen(move), { skipValidation: true });
         return this.chessjs.isInsufficientMaterial();
     }
@@ -1024,9 +1009,6 @@ export class Chess {
      * @param move The move to check for stalemate. Defaults to the current move.
      */
     isStalemate(move = this._currentMove): boolean {
-        if (move) {
-            return move.isStalemate;
-        }
         this.chessjs.load(this.fen(move), { skipValidation: true });
         return this.chessjs.isStalemate();
     }
@@ -1036,7 +1018,8 @@ export class Chess {
      * @param move The move to check for three-fold repetition. Defaults to the current move.
      */
     isThreefoldRepetition(move = this._currentMove): boolean {
-        return move?.isThreefoldRepetition ?? false;
+        this.chessjs.load(this.fen(move), { skipValidation: true });
+        return this.chessjs.isThreefoldRepetition();
     }
 
     /**

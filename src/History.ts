@@ -32,27 +32,6 @@ export type Move = ChessJsMove & {
     /** The material difference after this move is played. */
     materialDifference: number;
 
-    /** Whether the game is over after the move is played. */
-    gameOver: boolean;
-
-    /** Whether it is a draw after the move is played. */
-    isDraw: boolean;
-
-    /** Whether it is stalemate after the move is played. */
-    isStalemate: boolean;
-
-    /** Whether there is insufficient checkmating material after the move is played. */
-    isInsufficientMaterial: boolean;
-
-    /** Whether it is threefold repetition after the move is played. */
-    isThreefoldRepetition: boolean;
-
-    /** Whether it is checkmate after the move is played. */
-    isCheckmate: boolean;
-
-    /** Whether it is check after the move is played. */
-    inCheck: boolean;
-
     /** Whether the move is a null move. */
     isNullMove: boolean;
 
@@ -89,6 +68,14 @@ export interface HistoryRenderOptions {
     skipNags?: boolean;
 }
 
+interface TraverseStackItem {
+    pgnMoves: PgnMove[];
+    fen: string;
+    parent?: Move;
+    mainVariant?: Move;
+    ply: number;
+}
+
 export class History {
     setUpFen: string;
     setUpPly: number;
@@ -115,7 +102,14 @@ export class History {
         if (moves.length === 0) {
             this.clear();
         } else {
-            this.moves = this.traverse(moves, setUpFen, null, this.setUpPly, strict);
+            this.moves = this.traverse(
+                {
+                    pgnMoves: moves,
+                    fen: setUpFen,
+                    ply: this.setUpPly,
+                },
+                strict
+            );
         }
     }
 
@@ -135,47 +129,66 @@ export class History {
      * @param strict Whether to use the strict SAN praser. Defaults to false.
      * @returns The list of Moves.
      */
-    traverse(pgnMoves: PgnMove[], fen: string, parent: Move | null = null, ply = 1, strict = false): Move[] {
-        const moves: Move[] = [];
+    traverse(props: TraverseStackItem, strict: boolean): Move[] {
+        let moves: Move[] = [];
+        const chess = new Chess(props.fen);
 
-        try {
-            const chess = new Chess(fen);
-            let previousMove = parent;
+        const stack: TraverseStackItem[] = [props];
 
-            for (const pgnMove of pgnMoves) {
-                const notation = pgnMove.notation.notation;
-                const chessJsMove =
-                    notation === nullMoveNotation ? getNullMove(chess) : chess.move(notation, { strict });
-                if (!chessJsMove) {
-                    throw new Error(`Invalid move ${notation} at position ${chess.fen()}`);
-                }
+        while (stack.length > 0) {
+            try {
+                let { pgnMoves, fen, parent, mainVariant, ply } = stack.pop()!;
+                chess.load(fen, { skipValidation: true });
 
-                const move = this.getMove(ply, pgnMove, chessJsMove, chess);
-                if (previousMove) {
-                    move.previous = previousMove;
-                    if (!previousMove.next) {
-                        previousMove.next = move;
+                let previousMove = parent;
+                const variation: Move[] = [];
+
+                for (const pgnMove of pgnMoves) {
+                    const notation = pgnMove.notation.notation;
+
+                    const chessJsMove =
+                        notation === nullMoveNotation ? getNullMove(chess) : chess.move(notation, { strict });
+
+                    if (!chessJsMove) {
+                        throw new Error(`Invalid move ${notation} at position ${chess.fen()}`);
                     }
-                }
 
-                const parsedVariations = pgnMove.variations;
-                if (parsedVariations.length > 0) {
-                    const lastFen = moves.length > 0 ? moves[moves.length - 1].fen : fen;
-                    for (let parsedVariation of parsedVariations) {
-                        const variation = this.traverse(parsedVariation, lastFen, previousMove, ply, strict);
-                        if (variation.length > 0) {
-                            move.variations.push(variation);
+                    const move = this.getMove(ply, pgnMove, chessJsMove);
+                    if (previousMove) {
+                        move.previous = previousMove;
+                        if (!previousMove.next) {
+                            previousMove.next = move;
                         }
                     }
-                }
-                move.variation = moves;
-                moves.push(move);
-                previousMove = move;
 
-                ply++;
+                    const parsedVariations = pgnMove.variations;
+                    if (parsedVariations.length > 0) {
+                        const lastFen = variation.length > 0 ? variation[variation.length - 1].fen : fen;
+                        for (let parsedVariation of parsedVariations) {
+                            stack.push({
+                                pgnMoves: parsedVariation,
+                                fen: lastFen,
+                                parent: previousMove,
+                                mainVariant: move,
+                                ply,
+                            });
+                        }
+                    }
+                    move.variation = variation;
+                    variation.push(move);
+                    previousMove = move;
+
+                    ply++;
+                }
+
+                if (mainVariant) {
+                    mainVariant.variations.unshift(variation);
+                } else {
+                    moves = variation;
+                }
+            } catch (err) {
+                console.error(err);
             }
-        } catch (err) {
-            console.error(err);
         }
 
         return moves;
@@ -186,34 +199,24 @@ export class History {
      * @param ply The ply of the move.
      * @param pgnMove The move from the PGN parser library.
      * @param chessJsMove The move from the Chess.js library.
-     * @param chess The Chess.js instance.
      * @returns The Move object for the given data.
      */
-    getMove(ply: number, pgnMove: PgnMove, chessJsMove: ChessJsMove, chess: Chess): Move {
-        const move: Move = {
-            ...chessJsMove,
-            previous: null,
-            next: null,
-            ply,
-            fen: chessJsMove.after,
-            uci: chessJsMove.from + chessJsMove.to + (chessJsMove.promotion ? chessJsMove.promotion : ''),
-            variation: [],
-            variations: [],
-            gameOver: chess.isGameOver(),
-            isDraw: chess.isDraw(),
-            isStalemate: chess.isStalemate(),
-            isInsufficientMaterial: chess.isInsufficientMaterial(),
-            isThreefoldRepetition: chess.isThreefoldRepetition(),
-            isCheckmate: chess.isCheckmate(),
-            inCheck: chess.inCheck(),
-            isNullMove: chessJsMove.san === nullMoveNotation,
-            drawOffer: pgnMove.drawOffer,
-            nags: pgnMove.nags,
-            commentMove: pgnMove.commentMove,
-            commentAfter: pgnMove.commentAfter,
-            commentDiag: convertChesscomHighlights(pgnMove.commentDiag),
-            materialDifference: getMaterialDifference(chessJsMove.after),
-        };
+    getMove(ply: number, pgnMove: PgnMove, chessJsMove: ChessJsMove): Move {
+        const move = chessJsMove as Move;
+        move.previous = null;
+        move.next = null;
+        move.ply = ply;
+        move.fen = chessJsMove.after;
+        move.uci = chessJsMove.from + chessJsMove.to + (chessJsMove.promotion ? chessJsMove.promotion : '');
+        move.variations = [];
+        move.isNullMove = chessJsMove.san === nullMoveNotation;
+        move.drawOffer = pgnMove.drawOffer;
+        move.nags = pgnMove.nags;
+        move.commentAfter = pgnMove.commentAfter;
+        move.commentMove = pgnMove.commentMove;
+        move.commentDiag = convertChesscomHighlights(pgnMove.commentDiag);
+        move.materialDifference = getMaterialDifference(chessJsMove.after);
+
         return move;
     }
 
@@ -264,7 +267,7 @@ export class History {
                 ? getNullMove(chess, { disableNullMoves })
                 : chess.move(notation, { strict });
             if (chessJsMove) {
-                return this.getMove(previous ? previous.ply + 1 : this.setUpPly, {} as PgnMove, chessJsMove, chess);
+                return this.getMove(previous ? previous.ply + 1 : this.setUpPly, {} as PgnMove, chessJsMove);
             }
         } catch (err) {
             console.error(err);

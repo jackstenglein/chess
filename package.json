@@ -31,7 +31,8 @@
     "homepage": "https://github.com/jackstenglein/chess#readme",
     "dependencies": {
         "@jackstenglein/pgn-parser": "^2.0.6",
-        "chess.js": "^1.0.0-beta.7"
+        "chess.js": "^1.0.0-beta.7",
+        "v8-profiler-next": "^1.10.0"
     },
     "devDependencies": {
         "@types/jest": "^29.5.2",
