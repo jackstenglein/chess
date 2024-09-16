@@ -341,24 +341,28 @@ export class Chess {
      * a LegalMove event.
      * @param move The move to set the currentMove to or null to go to the starting position.
      * If non-null, it must exist in the pgn history.
+     * @param skipPublish If true, no event will be published.
      * @returns The new current Move.
      */
-    seek(move: Move | null): Move | null {
+    seek(move: Move | null, skipPublish = false): Move | null {
         if (move) {
             this.chessjs.load(move.fen);
         } else {
             this.chessjs.load(this.setUpFen());
         }
 
-        publishEvent(this.observers, {
-            type: EventType.LegalMove,
-            fen: this.fen(),
-            move: move,
-            previousMove: this._currentMove,
-            notation: move?.san,
-        });
-
+        const previousMove = this._currentMove;
         this._currentMove = move;
+
+        if (!skipPublish) {
+            publishEvent(this.observers, {
+                type: EventType.LegalMove,
+                fen: this.fen(),
+                move,
+                previousMove,
+                notation: move?.san,
+            });
+        }
         return move;
     }
 
@@ -501,12 +505,14 @@ export class Chess {
             if (skipSeek) {
                 return nextMove;
             }
+
+            this.seek(nextMove, true);
             publishEvent(this.observers, {
                 type: EventType.LegalMove,
                 move: nextMove!,
-                previousMove: previousMove,
+                previousMove,
             });
-            return this.seek(nextMove);
+            return nextMove;
         }
 
         const existingVariant = this.getVariation(candidate, previousMove);
@@ -514,12 +520,14 @@ export class Chess {
             if (skipSeek) {
                 return existingVariant;
             }
+
+            this.seek(existingVariant, true);
             publishEvent(this.observers, {
                 type: EventType.LegalMove,
                 move: existingVariant,
-                previousMove: previousMove,
+                previousMove,
             });
-            return this.seek(existingVariant);
+            return existingVariant;
         }
 
         if (existingOnly) {
@@ -536,12 +544,14 @@ export class Chess {
             if (skipSeek) {
                 return moveResult;
             }
+
+            this.seek(moveResult);
             publishEvent(this.observers, {
                 type: EventType.NewVariation,
                 move: moveResult,
-                previousMove: previousMove,
+                previousMove,
             });
-            return this.seek(moveResult);
+            return moveResult;
         } catch (e) {
             publishEvent(this.observers, {
                 type: EventType.IllegalMove,
@@ -617,7 +627,7 @@ export class Chess {
 
         publishEvent(this.observers, {
             type: EventType.DeleteMove,
-            move: move,
+            move,
             previousMove: move.previous,
             mainlineMove,
         });
