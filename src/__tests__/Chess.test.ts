@@ -327,6 +327,11 @@ describe('Chess - Making Moves', () => {
         expect(chess.fen()).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
     });
 
+    it('should allow null moves with -- in PGN', () => {
+        const chess = new Chess({pgn: '1. e4 --'});
+        expect(chess.history()[1]?.san).toBe('Z0');
+    });
+
     it('should get null move after en passant (#3)', () => {
         const chess = new Chess({ fen: 'rnbqkbnr/p1pppppp/1p6/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2' });
         chess.move('d5');
