@@ -328,8 +328,15 @@ describe('Chess - Making Moves', () => {
     });
 
     it('should allow null moves with -- in PGN', () => {
-        const chess = new Chess({pgn: '1. e4 --'});
+        const chess = new Chess({ pgn: '1. e4 --' });
         expect(chess.history()[1]?.san).toBe('Z0');
+    });
+
+    it('should recognize same SAN and UCI moves', () => {
+        const chess = new Chess({ pgn: '1. e4' });
+        chess.seek(null);
+        chess.move('e2e4');
+        expect(chess.history()[0].variations).toHaveLength(0);
     });
 
     it('should get null move after en passant (#3)', () => {

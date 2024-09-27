@@ -377,7 +377,7 @@ export class Chess {
             return false;
         }
         if (typeof candidate === 'string') {
-            return move.san === candidate;
+            return move.san === candidate || move.uci === candidate;
         }
         return move.from === candidate.from && move.to === candidate.to && move.promotion === candidate.promotion;
     }
