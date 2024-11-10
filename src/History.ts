@@ -61,11 +61,20 @@ export interface HistoryRenderOptions {
     /** Whether to skip rendering the comments. */
     skipComments?: boolean;
 
-    /** Whether to skip rendering the variations. */
-    skipVariations?: boolean;
-
     /** Whether to skip rendering the NAGs. */
     skipNags?: boolean;
+
+    /** Whether to skip rendering drawables. */
+    skipDrawables?: boolean;
+
+    /** Whether to skip rendering variations. */
+    skipVariations?: boolean;
+
+    /** Whether to skip rendering null moves. */
+    skipNullMoves?: boolean;
+
+    /** Whether to skip rendering clock times. */
+    skipClocks?: boolean;
 }
 
 interface TraverseStackItem {
@@ -328,6 +337,10 @@ export class History {
         const renderVariation = (variation: Move[], needReminder = false) => {
             let result = '';
             for (let move of variation) {
+                if (options?.skipNullMoves && move.san === nullMoveNotation) {
+                    break;
+                }
+
                 if (!options?.skipComments && move.commentMove) {
                     result += `{ ${move.commentMove} } `;
                     needReminder = true;
@@ -351,8 +364,8 @@ export class History {
                     needReminder = true;
                 }
 
-                if (!options?.skipComments && move.commentDiag) {
-                    result += renderCommands(move.commentDiag);
+                if (move.commentDiag) {
+                    result += renderCommands(move.commentDiag, options);
                 }
 
                 if (!options?.skipVariations && move.variations.length > 0) {
@@ -470,38 +483,39 @@ export function getNullMove(chess: Chess, options: MovesOptions = {}): ChessJsMo
  * Returns the diagram comment as a string by encoding the commands into
  * PGN format.
  * @param commentDiag The comment to convert to a string.
+ * @param options The render options (for skipping certain commands).
  * @returns A PGN string of the comment.
  */
-function renderCommands(commentDiag: DiagramComment): string {
-    const { colorArrows, colorFields, comment, ...rest } = commentDiag;
+function renderCommands(commentDiag: DiagramComment, options?: HistoryRenderOptions): string {
+    const { colorArrows, colorFields, comment, clk, ...rest } = commentDiag;
 
-    if (comment && Object.keys(commentDiag).length === 1) {
-        return '';
-    }
+    let result = '';
 
-    let result = '{ ';
-
-    if (colorArrows && colorArrows.length > 0) {
+    if (!options?.skipDrawables && colorArrows && colorArrows.length > 0) {
         result += `[%cal ${colorArrows.join(',')}]`;
     }
-    if (colorFields && colorFields.length > 0) {
+    if (!options?.skipDrawables && colorFields && colorFields.length > 0) {
         result += `[%csl ${colorFields.join(',')}]`;
     }
 
+    if (!options?.skipClocks && clk) {
+        const tokens = clk.split(':');
+        while (tokens.length < 3) {
+            tokens.unshift('00');
+        }
+        result += `[%clk ${tokens.join(':')}]`;
+    }
+
     Object.entries(rest).forEach(([k, v]) => {
-        if (k === 'clk' && v && typeof v === 'string') {
-            const tokens = v.split(':');
-            while (tokens.length < 3) {
-                tokens.unshift('00');
-            }
-            result += `[%clk ${tokens.join(':')}]`;
-        } else if (v) {
+        if (v) {
             result += `[%${k} ${v}]`;
         }
     });
 
-    result += ' } ';
-    return result;
+    if (result.length === 0) {
+        return '';
+    }
+    return `{ ${result} } `;
 }
 
 /**

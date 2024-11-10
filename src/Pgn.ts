@@ -81,14 +81,20 @@ export class Pgn {
      * @param options An object that controls which fields are included in the output.
      * @returns The PGN as a string.
      */
-    render({ width = -1, skipHeader, skipComments, skipVariations, skipNags }: RenderOptions = {}) {
-        let result = !skipHeader ? this.header.render() + '\n' : '';
+    render({ width = -1, skipHeader, skipComments, ...rest }: RenderOptions = {}) {
+        let result = '';
+
+        if (!skipHeader) {
+            result = this.header.render() + '\n';
+        } else if (this.header.tags.FEN && this.header.tags.FEN !== FEN.start) {
+            result += `[FEN "${this.header.tags.FEN}"]\n[SetUp "1"]\n\n`;
+        }
 
         if (!skipComments && this.gameComment.comment) {
             result += `{ ${this.gameComment.comment} }\n`;
         }
 
-        let history = this.history.render({ skipComments, skipVariations, skipNags });
+        let history = this.history.render({ skipComments, ...rest });
         history += ' ' + this.renderResult();
         return result + wrap(history, width);
     }

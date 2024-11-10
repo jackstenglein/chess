@@ -378,7 +378,7 @@ describe('Chess - Making Moves', () => {
         expect(chess.moves().length).toBe(23);
         expect(JSON.stringify(chess.moves({ square: 'e2' }).map((m) => m.san))).toBe('["e3","e4"]');
         expect(JSON.stringify(chess.moves({ piece: 'n' }).map((m) => m.san))).toBe(
-            '["Na4","Nb5","Nd5","Ne4","Nb1","Nf3","Nh3"]'
+            '["Na4","Nb5","Nd5","Ne4","Nb1","Nf3","Nh3"]',
         );
     });
 
@@ -651,10 +651,19 @@ describe('Chess - Rendering', () => {
         expect(pgn).toBe('\n1. e4 { [%clk 00:30:40] } *');
     });
 
+    it('skips clk pgn if necessary', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        chess.setCommand('clk', '30:40');
+
+        const pgn = chess.renderPgn({ skipClocks: true });
+        expect(pgn).toBe('\n1. e4 *');
+    });
+
     it('renders correct PGN for no moves', () => {
         const chess = new Chess({ fen: 'r5k1/pp2bppp/2p1pn2/3rN2q/5QP1/2BP4/PP2PP1P/R4RK1 b - - 0 1' });
         expect(chess.renderPgn()).toBe(
-            '[FEN "r5k1/pp2bppp/2p1pn2/3rN2q/5QP1/2BP4/PP2PP1P/R4RK1 b - - 0 1"]\n[SetUp "1"]\n\n*'
+            '[FEN "r5k1/pp2bppp/2p1pn2/3rN2q/5QP1/2BP4/PP2PP1P/R4RK1 b - - 0 1"]\n[SetUp "1"]\n\n*',
         );
     });
 
@@ -669,18 +678,78 @@ describe('Chess - Rendering', () => {
             pgn: '[Event "Classicals: Algimantas Ogintas (1724) - Killane Cup with \\"The Town\\" OTB"]\n\n*',
         });
         expect(chess.header().tags.Event).toBe(
-            'Classicals: Algimantas Ogintas (1724) - Killane Cup with "The Town" OTB'
+            'Classicals: Algimantas Ogintas (1724) - Killane Cup with "The Town" OTB',
         );
 
         const pgn = chess.renderPgn();
         expect(pgn).toBe(
-            '[Event "Classicals: Algimantas Ogintas (1724) - Killane Cup with \\"The Town\\" OTB"]\n[Result "*"]\n\n*'
+            '[Event "Classicals: Algimantas Ogintas (1724) - Killane Cup with \\"The Town\\" OTB"]\n[Result "*"]\n\n*',
         );
 
         const newChess = new Chess({ pgn });
         expect(newChess.header().tags.Event).toBe(
-            'Classicals: Algimantas Ogintas (1724) - Killane Cup with "The Town" OTB'
+            'Classicals: Algimantas Ogintas (1724) - Killane Cup with "The Town" OTB',
         );
+    });
+
+    it('renders PGN with variation', () => {
+        const chess = new Chess({ pgn: '1. e4 (1. d4)' });
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n1. e4 (1. d4) *');
+    });
+
+    it('skips rendering variations if necessary', () => {
+        const chess = new Chess({ pgn: '1. e4 (1. d4)' });
+        const pgn = chess.renderPgn({ skipVariations: true });
+        expect(pgn).toBe('\n1. e4 *');
+    });
+
+    it('renders PGN with NAGs', () => {
+        const chess = new Chess({ pgn: '1. e4!' });
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n1. e4 $1 *');
+    });
+
+    it('skips rendering NAGs if necessary', () => {
+        const chess = new Chess({ pgn: '1. e4!' });
+        const pgn = chess.renderPgn({ skipNags: true });
+        expect(pgn).toBe('\n1. e4 *');
+    });
+
+    it('renders PGN with drawables', () => {
+        const chess = new Chess({ pgn: '1. e4 {[%cal Ge4e5]}' });
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n1. e4 { [%cal Ge4e5] } *');
+    });
+
+    it('skips rendering drawables if necessary', () => {
+        const chess = new Chess({ pgn: '1. e4 {[%cal Ge4e5]}' });
+        const pgn = chess.renderPgn({ skipDrawables: true });
+        expect(pgn).toBe('\n1. e4 *');
+    });
+
+    it('renders PGN with comments', () => {
+        const chess = new Chess({ pgn: '1. e4 {best by test! }' });
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n1. e4 { best by test! } *');
+    });
+
+    it('skips rendering comments if necessary', () => {
+        const chess = new Chess({ pgn: '1. e4 {best by test! }' });
+        const pgn = chess.renderPgn({ skipComments: true });
+        expect(pgn).toBe('\n1. e4 *');
+    });
+
+    it('renders PGN with null moves', () => {
+        const chess = new Chess({ pgn: '1. e4 Z0' });
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n1. e4 Z0 *');
+    });
+
+    it('skips rendering null moves if necessary', () => {
+        const chess = new Chess({ pgn: '1. e4 Z0' });
+        const pgn = chess.renderPgn({ skipNullMoves: true });
+        expect(pgn).toBe('\n1. e4 *');
     });
 });
 
