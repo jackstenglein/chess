@@ -498,7 +498,7 @@ export class Chess {
             existingOnly?: boolean;
             skipSeek?: boolean;
             disableNullMoves?: boolean;
-        } = {}
+        } = {},
     ): Move | null {
         const nextMove = this.nextMove(previousMove);
         if (this.candidateMatches(candidate, nextMove)) {
@@ -581,7 +581,7 @@ export class Chess {
             previousMove?: Move | null;
             disableNullMoves?: boolean;
             strict?: boolean;
-        } = {}
+        } = {},
     ): Move | null {
         return this.pgn.history.validateMove(candidate, { previous: previousMove, disableNullMoves, strict });
     }
@@ -1068,7 +1068,7 @@ export class Chess {
     pieces(
         type: PieceSymbol | undefined = undefined,
         color: Color | undefined = undefined,
-        move = this._currentMove
+        move = this._currentMove,
     ): Piece[] {
         this.chessjs.load(this.fen(move));
         let result: Piece[] = [];

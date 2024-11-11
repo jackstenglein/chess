@@ -117,7 +117,7 @@ export class History {
                     fen: setUpFen,
                     ply: this.setUpPly,
                 },
-                strict
+                strict,
             );
         }
     }
@@ -262,7 +262,7 @@ export class History {
             previous,
             disableNullMoves = false,
             strict = false,
-        }: { previous: Move | null; disableNullMoves?: boolean; strict?: boolean }
+        }: { previous: Move | null; disableNullMoves?: boolean; strict?: boolean },
     ): Move | null {
         const chess = new Chess();
         if (previous) {
@@ -299,7 +299,7 @@ export class History {
             previous,
             disableNullMoves = false,
             strict = false,
-        }: { previous: Move | null; disableNullMoves?: boolean; strict?: boolean }
+        }: { previous: Move | null; disableNullMoves?: boolean; strict?: boolean },
     ): Move {
         const move = this.validateMove(notation, { previous, disableNullMoves, strict });
         if (!move) {
