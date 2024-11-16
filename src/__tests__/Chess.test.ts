@@ -506,6 +506,52 @@ describe('Chess - Deleting Moves', () => {
         expect(chess.nextMove()?.san).toBe('d4');
         expect(chess.currentMove()?.variation).toHaveLength(3);
     });
+
+    it('should handle delete before move', () => {
+        const chess = new Chess();
+        const firstMove = chess.move('e4');
+        chess.move('e5');
+        const newFirstMove = chess.move('d4');
+
+        chess.seek(firstMove);
+        chess.deleteBefore(newFirstMove);
+
+        expect(chess.setUpFen()).toBe(newFirstMove!.before);
+        expect(chess.firstMove()).toBe(newFirstMove);
+        expect(chess.currentMove()).toBe(newFirstMove);
+        expect(newFirstMove?.previous).toBe(null);
+        expect(chess.history().length).toBe(1);
+    });
+
+    it('should keep current move when deleting before move', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        chess.move('e5');
+        const newFirstMove = chess.move('d4');
+        const move = chess.move('exd4');
+
+        chess.deleteBefore(newFirstMove);
+
+        expect(chess.currentMove()).toBe(move);
+        expect(chess.history().length).toBe(2);
+    });
+
+    it('should keep variations when deleting before move', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        const lastDeletedMove = chess.move('e5');
+        const newFirstMove = chess.move('d4');
+        chess.seek(newFirstMove!.previous);
+        const variation = chess.move('Nf3');
+
+        expect(variation!.previous).toBe(lastDeletedMove);
+
+        chess.deleteBefore(newFirstMove);
+
+        expect(chess.currentMove()).toBe(variation);
+        expect(chess.history().length).toBe(1);
+        expect(variation!.previous).toBe(null);
+    });
 });
 
 describe('Chess - Promoting Variations', () => {
@@ -724,6 +770,18 @@ describe('Chess - Rendering', () => {
 
     it('skips rendering drawables if necessary', () => {
         const chess = new Chess({ pgn: '1. e4 {[%cal Ge4e5]}' });
+        const pgn = chess.renderPgn({ skipDrawables: true });
+        expect(pgn).toBe('\n1. e4 *');
+    });
+
+    it('renders PGN with color fields', () => {
+        const chess = new Chess({ pgn: '1. e4 {[%csl Gf2]}' });
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n1. e4 { [%csl Gf2] } *');
+    });
+
+    it('skips rendering color fields if necessary', () => {
+        const chess = new Chess({ pgn: '1. e4 {[%csl Gf2]}' });
         const pgn = chess.renderPgn({ skipDrawables: true });
         expect(pgn).toBe('\n1. e4 *');
     });

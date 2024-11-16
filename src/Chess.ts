@@ -36,6 +36,7 @@ export enum EventType {
     LegalMove = 'LEGAL_MOVE',
     NewVariation = 'NEW_VARIATION',
     DeleteMove = 'DELETE_MOVE',
+    DeleteBeforeMove = 'DELETE_BEFORE_MOVE',
     UpdateComment = 'UPDATE_COMMENT',
     UpdateCommand = 'UPDATE_COMMAND',
     UpdateNags = 'UPDATE_NAGS',
@@ -630,6 +631,41 @@ export class Chess {
             move,
             previousMove: move.previous,
             mainlineMove,
+        });
+    }
+
+    /**
+     * Deletes all moves before the provided move. The provided move then becomes the
+     * first move in the game.
+     * @param move The move to delete before. It must be a mainline move.
+     */
+    deleteBefore(move = this._currentMove) {
+        if (!move || !move.previous || !this.isInMainline(move)) {
+            return;
+        }
+
+        const index = move.variation.findIndex((element) => element === move);
+        move.variation.splice(0, index);
+
+        this.pgn.header.tags.FEN = move.before;
+        this.pgn.header.tags.SetUp = '1';
+        this.pgn.gameComment = move.previous.commentDiag || {};
+        this.pgn.history.setUpFen = move.before;
+        this.pgn.history.setUpPly = move.ply;
+
+        move.previous = null;
+
+        for (const variation of move.variations) {
+            variation[0].previous = null;
+        }
+
+        if (!this.isDescendant(move)) {
+            this.seek(move);
+        }
+
+        publishEvent(this.observers, {
+            type: EventType.DeleteBeforeMove,
+            move,
         });
     }
 
