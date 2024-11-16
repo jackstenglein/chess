@@ -650,6 +650,7 @@ export class Chess {
         this.pgn.header.tags.FEN = move.before;
         this.pgn.header.tags.SetUp = '1';
         this.pgn.gameComment = move.previous.commentDiag || {};
+        this.pgn.gameComment.comment = move.previous.commentAfter;
         this.pgn.history.setUpFen = move.before;
         this.pgn.history.setUpPly = move.ply;
 

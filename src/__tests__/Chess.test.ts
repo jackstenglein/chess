@@ -552,6 +552,20 @@ describe('Chess - Deleting Moves', () => {
         expect(chess.history().length).toBe(1);
         expect(variation!.previous).toBe(null);
     });
+
+    it('should reset game comment when deleting before move', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        chess.setDrawables(['Gg1f3'], ['Rh1']);
+        chess.setComment('Test');
+
+        chess.move('e5');
+        chess.deleteBefore();
+
+        expect(chess.pgn.gameComment.colorArrows?.[0]).toBe('Gg1f3');
+        expect(chess.pgn.gameComment.colorFields?.[0]).toBe('Rh1');
+        expect(chess.pgn.gameComment.comment).toBe('Test');
+    });
 });
 
 describe('Chess - Promoting Variations', () => {
@@ -736,6 +750,37 @@ describe('Chess - Rendering', () => {
         expect(newChess.header().tags.Event).toBe(
             'Classicals: Algimantas Ogintas (1724) - Killane Cup with "The Town" OTB',
         );
+    });
+
+    it('renders PGN with drawables in game comment', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        chess.seek(null);
+        chess.setDrawables(['Gf1e2'], ['Rh1']);
+
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n{ [%cal Gf1e2][%csl Rh1] } \n1. e4 *');
+    });
+
+    it('renders PGN with comment and drawables in game comment', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        chess.seek(null);
+        chess.setDrawables(['Gf1e2'], ['Rh1']);
+        chess.setComment('Test');
+
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n{ Test }{ [%cal Gf1e2][%csl Rh1] } \n1. e4 *');
+    });
+
+    it('renders reminder if white move has drawables', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        chess.setDrawables([], ['Rh1']);
+        chess.move('e5');
+
+        const pgn = chess.renderPgn();
+        expect(pgn).toBe('\n1. e4 { [%csl Rh1] } 1... e5 *');
     });
 
     it('renders PGN with variation', () => {

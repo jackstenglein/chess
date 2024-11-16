@@ -365,7 +365,9 @@ export class History {
                 }
 
                 if (move.commentDiag) {
-                    result += renderCommands(move.commentDiag, options);
+                    const commands = renderCommands(move.commentDiag, options);
+                    result += commands;
+                    needReminder = needReminder || commands.length > 0;
                 }
 
                 if (!options?.skipVariations && move.variations.length > 0) {
@@ -486,7 +488,7 @@ export function getNullMove(chess: Chess, options: MovesOptions = {}): ChessJsMo
  * @param options The render options (for skipping certain commands).
  * @returns A PGN string of the comment.
  */
-function renderCommands(commentDiag: DiagramComment, options?: HistoryRenderOptions): string {
+export function renderCommands(commentDiag: DiagramComment, options?: HistoryRenderOptions): string {
     const { colorArrows, colorFields, comment, clk, ...rest } = commentDiag;
 
     let result = '';

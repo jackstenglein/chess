@@ -5,7 +5,7 @@
  */
 import { parse, DiagramComment, split, StartRule } from '@jackstenglein/pgn-parser';
 import { Header } from './Header';
-import { History, HistoryRenderOptions } from './History';
+import { History, HistoryRenderOptions, renderCommands } from './History';
 import { FEN } from './Chess';
 
 export interface RenderOptions extends HistoryRenderOptions {
@@ -90,8 +90,17 @@ export class Pgn {
             result += `[FEN "${this.header.tags.FEN}"]\n[SetUp "1"]\n\n`;
         }
 
-        if (!skipComments && this.gameComment.comment) {
-            result += `{ ${this.gameComment.comment} }\n`;
+        if (!skipComments && this.gameComment) {
+            const originalLength = result.length;
+
+            if (this.gameComment.comment) {
+                result += `{ ${this.gameComment.comment} }`;
+            }
+            result += `${renderCommands(this.gameComment, { skipComments, ...rest })}`;
+
+            if (result.length !== originalLength) {
+                result += '\n';
+            }
         }
 
         let history = this.history.render({ skipComments, ...rest });
