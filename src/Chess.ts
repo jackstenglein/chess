@@ -937,6 +937,18 @@ export class Chess {
         return this.pgn.render(options || {});
     }
 
+    /**
+     * Gets the material difference of the provided move.
+     * @param move The move to get the material difference for. Defaults to the current move.
+     * @returns The material difference of the move.
+     */
+    materialDifference(move = this._currentMove): number {
+        if (move) {
+            return move.materialDifference;
+        }
+        return this.pgn.history.setUpMaterialDifference;
+    }
+
     /************************************************************
      *                                                          *
      *            Functionality provided by Chess.js            *

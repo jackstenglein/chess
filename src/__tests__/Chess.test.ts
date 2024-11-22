@@ -876,22 +876,32 @@ describe('Chess - Miscellaneous', () => {
 
     it('returns correct material difference', () => {
         const chess = new Chess();
+        expect(chess.materialDifference()).toBe(0);
 
         chess.move('e4');
         expect(chess.currentMove()?.materialDifference).toBe(0);
+        expect(chess.materialDifference()).toBe(0);
 
         chess.move('d5');
         chess.move('exd5');
         expect(chess.currentMove()?.materialDifference).toBe(1);
+        expect(chess.materialDifference()).toBe(1);
 
         chess.move('Qxd5');
         expect(chess.currentMove()?.materialDifference).toBe(0);
+        expect(chess.materialDifference()).toBe(0);
 
         chess.move('Nc3');
         chess.move('Nf6');
         chess.move('Nxd5');
         chess.move('Nxd5');
         expect(chess.currentMove()?.materialDifference).toBe(6);
+        expect(chess.materialDifference()).toBe(6);
+    });
+
+    it('returns correct material difference on start position', () => {
+        const chess = new Chess({ fen: 'rnbqkbnr/ppppp1pp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' });
+        expect(chess.materialDifference()).toBe(1);
     });
 
     it('should set PlyCount header', () => {

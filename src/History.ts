@@ -88,6 +88,7 @@ interface TraverseStackItem {
 export class History {
     setUpFen: string;
     setUpPly: number;
+    setUpMaterialDifference: number;
     moves: Move[] = [];
 
     /**
@@ -98,6 +99,7 @@ export class History {
      */
     constructor(moves: PgnMove[], setUpFen: string = FEN.start, strict = false) {
         this.setUpFen = setUpFen;
+        this.setUpMaterialDifference = getMaterialDifference(setUpFen);
 
         const fenTokens = setUpFen.split(/\s+/);
         const colorToPlay = fenTokens[1];
@@ -604,7 +606,7 @@ const fenValues: Record<string, number> = {
  * @param fen The FEN to get the material difference for.
  * @returns The material difference in the position.
  */
-function getMaterialDifference(fen: string): number {
+export function getMaterialDifference(fen: string): number {
     const pieces = fen.split(' ')[0];
     let materialDiff = 0;
     for (const char of pieces) {
