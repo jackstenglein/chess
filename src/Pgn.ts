@@ -81,31 +81,50 @@ export class Pgn {
      * @param options An object that controls which fields are included in the output.
      * @returns The PGN as a string.
      */
-    render({ width = -1, skipHeader, skipComments, ...rest }: RenderOptions = {}) {
-        let result = '';
+    render(options: RenderOptions = {}) {
+        let result = this.renderHeader(options);
+        result += this.renderGameComment(options);
 
-        if (!skipHeader) {
-            result = this.header.render() + '\n';
-        } else if (this.header.tags.FEN && this.header.tags.FEN !== FEN.start) {
-            result += `[FEN "${this.header.tags.FEN}"]\n[SetUp "1"]\n\n`;
-        }
-
-        if (!skipComments && this.gameComment) {
-            const originalLength = result.length;
-
-            if (this.gameComment.comment) {
-                result += `{ ${this.gameComment.comment} }`;
-            }
-            result += `${renderCommands(this.gameComment, { skipComments, ...rest })}`;
-
-            if (result.length !== originalLength) {
-                result += '\n';
-            }
-        }
-
-        let history = this.history.render({ skipComments, ...rest });
+        let history = this.history.render(options);
         history += ' ' + this.renderResult();
-        return result + wrap(history, width);
+        return result + wrap(history, options.width || -1);
+    }
+
+    /**
+     * Returns the header of the PGN as a string.
+     * @param options The PGN render options. If skipHeader is true, an empty string is returned,
+     * unless the FEN tag has a custom position, in which case only the FEN and SetUp tags are
+     * rendered.
+     */
+    renderHeader({ skipHeader }: RenderOptions = {}) {
+        if (!skipHeader) {
+            return this.header.render() + '\n';
+        }
+        if (this.header.tags.FEN && this.header.tags.FEN !== FEN.start) {
+            return `[FEN "${this.header.tags.FEN}"]\n[SetUp "1"]\n\n`;
+        }
+        return '';
+    }
+
+    /**
+     * Returns the game comment as a PGN string.
+     * @param options The PGN render options. If skipComments is true, an empty string is returned.
+     */
+    renderGameComment(options: RenderOptions = {}) {
+        if (options.skipComments || !this.gameComment) {
+            return '';
+        }
+
+        let result = '';
+        if (this.gameComment.comment) {
+            result = `{ ${this.gameComment.comment} }`;
+        }
+        result += renderCommands(this.gameComment, options);
+
+        if (result.length) {
+            result += '\n';
+        }
+        return result;
     }
 }
 
@@ -117,7 +136,7 @@ export class Pgn {
  * @param maxLength The max length of each line.
  * @returns The string with leading/trailing whitespace trimmed and wrapped to the line length.
  */
-function wrap(str: string, maxLength: number): string {
+export function wrap(str: string, maxLength: number): string {
     if (maxLength <= 0) {
         return str.trim();
     }

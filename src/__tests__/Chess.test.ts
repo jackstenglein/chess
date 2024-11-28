@@ -854,6 +854,24 @@ describe('Chess - Rendering', () => {
         const pgn = chess.renderPgn({ skipNullMoves: true });
         expect(pgn).toBe('\n1. e4 *');
     });
+
+    it('renders specific line', () => {
+        const chess = new Chess();
+        const e4 = chess.move('e4');
+        chess.move('e5');
+        chess.move('d4');
+        chess.seek(null);
+        chess.move('c4');
+
+        chess.seek(e4);
+        const c5 = chess.move('c5');
+        const c3 = chess.move('c3');
+        chess.seek(c5);
+        chess.move('Nf3');
+
+        const pgn = chess.renderLine(c3);
+        expect(pgn).toBe('\n1. e4 (1. c4) 1... c5 2. c3 (2. Nf3)');
+    });
 });
 
 describe('Chess - Miscellaneous', () => {

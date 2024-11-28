@@ -1,6 +1,6 @@
 import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece, Move as ChessJsMove } from 'chess.js';
-import { Move, getNullMove } from './History';
-import { Pgn, RenderOptions } from './Pgn';
+import { Move, getNullMove, renderVariation } from './History';
+import { Pgn, RenderOptions, wrap } from './Pgn';
 import { DiagramComment } from '@jackstenglein/pgn-parser';
 import { Header } from './Header';
 
@@ -935,6 +935,27 @@ export class Chess {
      */
     renderPgn(options?: RenderOptions): string {
         return this.pgn.render(options || {});
+    }
+
+    /**
+     * Render the line up to the given move as a PGN string, using the provided options.
+     * If move is null, only the PGN headers are rendered.
+     * @param move The last move of the line to render.
+     * @param options An object that controls which fields are included in the output.
+     */
+    renderLine(move = this._currentMove, options?: RenderOptions): string {
+        let result = this.pgn.renderHeader(options);
+        result += this.pgn.renderGameComment(options);
+
+        const line: Move[] = [];
+        while (move) {
+            line.push(move);
+            move = move.previous;
+        }
+        line.reverse();
+
+        const history = renderVariation(line, options);
+        return result + wrap(history, options?.width || -1);
     }
 
     /**

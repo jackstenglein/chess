@@ -336,59 +336,76 @@ export class History {
      * @returns The history as a PGN string.
      */
     render(options?: HistoryRenderOptions) {
-        const renderVariation = (variation: Move[], needReminder = false) => {
-            let result = '';
-            for (let move of variation) {
-                if (options?.skipNullMoves && move.san === nullMoveNotation) {
-                    break;
-                }
-
-                if (!options?.skipComments && move.commentMove) {
-                    result += `{ ${move.commentMove} } `;
-                    needReminder = true;
-                }
-
-                if (move.ply % 2 === 1) {
-                    result += Math.floor(move.ply / 2) + 1 + '. ';
-                } else if (result.length === 0 || needReminder) {
-                    result += move.ply / 2 + '... ';
-                }
-                needReminder = false;
-
-                result += move.san + ' ';
-
-                if (!options?.skipNags && move.nags) {
-                    result += move.nags.join(' ') + ' ';
-                }
-
-                if (!options?.skipComments && move.commentAfter) {
-                    result += `{ ${move.commentAfter} } `;
-                    needReminder = true;
-                }
-
-                if (move.commentDiag) {
-                    const commands = renderCommands(move.commentDiag, options);
-                    result += commands;
-                    needReminder = needReminder || commands.length > 0;
-                }
-
-                if (!options?.skipVariations && move.variations.length > 0) {
-                    for (let variation of move.variations) {
-                        result += '(' + renderVariation(variation) + ') ';
-                        needReminder = true;
-                    }
-                }
-                result += ' ';
-            }
-            return result;
-        };
-
-        let ret = renderVariation(this.moves);
-        // remove spaces before brackets and double spaces
-        ret = ret.replace(/\s+\)/g, ')');
-        ret = ret.replace(/  /g, ' ').trim();
-        return ret;
+        return renderVariation(this.moves, options);
     }
+}
+
+/**
+ * Renders the given move list as as PGN string, using the provided option.
+ * @param variation The variation to render.
+ * @param options An object that controls which fields are included in the output.
+ * @returns The variation as a PGN string.
+ */
+export function renderVariation(variation: Move[], options?: HistoryRenderOptions) {
+    let ret = renderVariationRecursive(variation, false, options);
+    // remove spaces before brackets and double spaces
+    ret = ret.replace(/\s+\)/g, ')');
+    ret = ret.replace(/  /g, ' ').trim();
+    return ret;
+}
+
+/**
+ * Renders the given move list, recursively rendering variations if necessary.
+ * @param variation The variation to render.
+ * @param needReminder Whether the PGN needs a move number reminder. This should usually be set only by recursive calls.
+ * @param options An object that controls which fields are included in the output.
+ * @returns The variation as a PGN string. Output may include spaces before parenthesis and double spaces.
+ */
+function renderVariationRecursive(variation: Move[], needReminder = false, options?: HistoryRenderOptions) {
+    let result = '';
+    for (let move of variation) {
+        if (options?.skipNullMoves && move.san === nullMoveNotation) {
+            break;
+        }
+
+        if (!options?.skipComments && move.commentMove) {
+            result += `{ ${move.commentMove} } `;
+            needReminder = true;
+        }
+
+        if (move.ply % 2 === 1) {
+            result += Math.floor(move.ply / 2) + 1 + '. ';
+        } else if (result.length === 0 || needReminder) {
+            result += move.ply / 2 + '... ';
+        }
+        needReminder = false;
+
+        result += move.san + ' ';
+
+        if (!options?.skipNags && move.nags) {
+            result += move.nags.join(' ') + ' ';
+        }
+
+        if (!options?.skipComments && move.commentAfter) {
+            result += `{ ${move.commentAfter} } `;
+            needReminder = true;
+        }
+
+        if (move.commentDiag) {
+            const commands = renderCommands(move.commentDiag, options);
+            result += commands;
+            needReminder = needReminder || commands.length > 0;
+        }
+
+        if (!options?.skipVariations && move.variations.length > 0) {
+            for (let variation of move.variations) {
+                result += '(' + renderVariation(variation) + ') ';
+                needReminder = true;
+            }
+        }
+        result += ' ';
+    }
+    return result;
 }
 
 /**
