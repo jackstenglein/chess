@@ -193,6 +193,11 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         chess.load(FEN.start);
         expect(chess.move('e4')).toBeTruthy();
     });
+
+    it('should load PGN with SCID += NAG', () => {
+        const chess = new Chess({ pgn: `1. e4 +=` });
+        expect(chess.history()[0].nags?.[0]).toBe('$14');
+    });
 });
 
 describe('Chess - Move Traversal', () => {
