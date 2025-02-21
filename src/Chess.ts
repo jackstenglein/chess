@@ -938,10 +938,11 @@ export class Chess {
     }
 
     /**
-     * Render the line up to the given move as a PGN string, using the provided options.
+     * Render the line up to (and including) the given move as a PGN string, using the provided options.
      * If move is null, only the PGN headers are rendered.
      * @param move The last move of the line to render.
      * @param options An object that controls which fields are included in the output.
+     * @returns The PGN of the line as a string.
      */
     renderLine(move = this._currentMove, options?: RenderOptions): string {
         let result = this.pgn.renderHeader(options);
@@ -954,6 +955,36 @@ export class Chess {
         }
         line.reverse();
 
+        const history = renderVariation(line, options);
+        return result + wrap(history, options?.width || -1);
+    }
+
+    /**
+     * Renders the line starting from (and including) the given move as a PGN string,
+     * using the provided options. renderFrom(null, options) is equivalent to
+     * renderPgn(options). The PGN header will include the FEN and SetUp tags set to
+     * the position prior to move.
+     * @param move The move to start rendering the PGN from.
+     * @param options An object that controls which fields are included in the output.
+     * @returns The PGN of the line as a string.
+     */
+    renderFrom(move = this._currentMove, options?: RenderOptions): string {
+        if (!move) {
+            return this.renderPgn(options);
+        }
+
+        let result = this.pgn.renderHeader(options);
+        if (result.includes('[FEN')) {
+            result.replace(/\[FEN ".*"\]/, `[FEN "${this.fen(move.previous)}"]`);
+        } else {
+            if (result.endsWith('\n')) {
+                result = result.slice(0, -1);
+            }
+            result += `[FEN "${this.fen(move.previous)}"]\n[SetUp "1"]\n\n`;
+        }
+
+        const index = move.variation.indexOf(move);
+        const line = move.variation.slice(index);
         const history = renderVariation(line, options);
         return result + wrap(history, options?.width || -1);
     }

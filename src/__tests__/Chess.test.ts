@@ -877,6 +877,20 @@ describe('Chess - Rendering', () => {
         const pgn = chess.renderLine(c3);
         expect(pgn).toBe('\n1. e4 (1. c4) 1... c5 2. c3 (2. Nf3)');
     });
+
+    it('renderFrom(null) is equivalent to renderPgn', () => {
+        const chess = new Chess({ pgn: '1. e4 (1. d4)' });
+        const pgn = chess.renderPgn();
+        expect(chess.renderFrom(null)).toBe(pgn);
+    });
+
+    it('renders from specific move', () => {
+        const chess = new Chess({ pgn: '1. e4 (1. d4 d5 2. c4 dxc4)' });
+        const d4 = chess.history()[0]?.variations[0][0];
+        expect(chess.renderFrom(d4)).toBe(
+            `[FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]\n[SetUp "1"]\n\n1. d4 d5 2. c4 dxc4`,
+        );
+    });
 });
 
 describe('Chess - Miscellaneous', () => {

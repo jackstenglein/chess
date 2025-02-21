@@ -341,7 +341,7 @@ export class History {
 }
 
 /**
- * Renders the given move list as as PGN string, using the provided option.
+ * Renders the given move list as as PGN string, using the provided options.
  * @param variation The variation to render.
  * @param options An object that controls which fields are included in the output.
  * @returns The variation as a PGN string.
