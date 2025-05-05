@@ -797,6 +797,38 @@ export class Chess {
     }
 
     /**
+     * Forces a variation by making the given move a variation of itself. The given move and its
+     * continuation becomes the variation, and a new variation containing just the given move becomes
+     * the new mainline. If the move is null or is not in the mainline, this function is a no-op.
+     * @param move The move to force a variation. This function is a no-op if move is null or not in the mainline.
+     * @param skipSeek If true, do not seek to the given move. Defaults to false.
+     */
+    forceVariation(move = this._currentMove, { skipSeek }: { skipSeek?: boolean } = {}): void {
+        if (!move || !this.isInMainline(move)) {
+            return;
+        }
+
+        try {
+            const moveResult = this.pgn.history.addMove(move.san, { previous: move.previous });
+            publishEvent(this.observers, {
+                type: EventType.NewVariation,
+                move: moveResult,
+                previousMove: moveResult.previous,
+            });
+            this.promoteVariation(moveResult, true);
+            if (!skipSeek) {
+                this.seek(moveResult);
+            }
+        } catch (e) {
+            publishEvent(this.observers, {
+                type: EventType.IllegalMove,
+                notation: move.san,
+                previousMove: move.previous,
+            });
+        }
+    }
+
+    /**
      * Returns the comment for the given move.
      * @param type The type of comment to get. Defaults to After.
      * @param move The move to get the comment for. Defaults to the current move.

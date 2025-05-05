@@ -198,11 +198,6 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         const chess = new Chess({ pgn: `1. e4 +=` });
         expect(chess.history()[0].nags?.[0]).toBe('$14');
     });
-
-    it(`should load PGN with Chessbase force variation`, () => {
-        const chess = new Chess({ pgn: `1. e4 (1. e4 e5)` });
-        expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5) *`);
-    });
 });
 
 describe('Chess - Move Traversal', () => {
@@ -951,5 +946,48 @@ describe('Chess - Miscellaneous', () => {
         chess.setHeader('PlyCount', '13');
         expect(chess.header().getRawValue('PlyCount')).toBe('13');
         expect(chess.header().valueMap().PlyCount).toBe('13');
+    });
+});
+
+describe.only('forceVariation', () => {
+    it(`should load PGN with forced variation`, () => {
+        const chess = new Chess({ pgn: `1. e4 (1. e4 e5)` });
+        expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5) *`);
+    });
+
+    it(`should add forced variation`, () => {
+        const chess = new Chess({ pgn: `1. e4 e5 2. d4 exd4` });
+        const move = chess.history()[2];
+        chess.forceVariation(move);
+        expect(chess.history()[2].san).toBe('d4');
+        expect(chess.history()[2].variations[0][0]).toBe(move);
+        expect(chess.renderPgn()).toBe(`\n1. e4 e5 2. d4 (2. d4 exd4) *`);
+    });
+
+    it(`should add forced variation on first move`, () => {
+        const chess = new Chess({ pgn: `1. e4 e5 2. d4 exd4` });
+        const move = chess.history()[0];
+        chess.forceVariation(move);
+        expect(chess.history()[0].san).toBe('e4');
+        expect(chess.history()[0].variations[0][0]).toBe(move);
+        expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5 2. d4 exd4) *`);
+    });
+
+    it(`should add forced variation on first move`, () => {
+        const chess = new Chess({ pgn: `1. e4 e5 2. d4 exd4` });
+        const move = chess.history()[0];
+        chess.forceVariation(move);
+        expect(chess.history()[0].san).toBe('e4');
+        expect(chess.history()[0].variations[0][0]).toBe(move);
+        expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5 2. d4 exd4) *`);
+    });
+
+    it(`should add forced variation on move with variations`, () => {
+        const chess = new Chess({ pgn: `1. e4 (1. d4 d5) e5 2. d4 exd4` });
+        const move = chess.history()[0];
+        chess.forceVariation(move);
+        expect(chess.history()[0].san).toBe('e4');
+        expect(chess.history()[0].variations[0][0]).toBe(move);
+        expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5 2. d4 exd4) (1. d4 d5) *`);
     });
 });
