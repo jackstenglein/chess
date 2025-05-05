@@ -198,6 +198,11 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         const chess = new Chess({ pgn: `1. e4 +=` });
         expect(chess.history()[0].nags?.[0]).toBe('$14');
     });
+
+    it(`should load PGN with Chessbase force variation`, () => {
+        const chess = new Chess({ pgn: `1. e4 (1. e4 e5)` });
+        expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5) *`);
+    });
 });
 
 describe('Chess - Move Traversal', () => {
