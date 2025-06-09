@@ -1,5 +1,5 @@
-import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece, Move as ChessJsMove } from 'chess.js';
-import { Move, getNullMove, renderVariation } from './History';
+import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece } from 'chess.js';
+import { Move, getNullMove, renderVariation, PickChessJsMove as ChessJsMove } from './History';
 import { Pgn, RenderOptions, wrap } from './Pgn';
 import { DiagramComment } from '@jackstenglein/pgn-parser';
 import { Header } from './Header';
@@ -1090,6 +1090,15 @@ export class Chess {
     }
 
     /**
+     * Returns the zobrist hash of the position.
+     * @param move The move after which to get castling rights. Defaults to the current move.
+     */
+    hash(move = this._currentMove) {
+        this.chessjs.load(this.fen(move), { skipValidation: true });
+        return this.chessjs.hash();
+    }
+
+    /**
      * Returns true if the square is attacked any piece of the given color.
      * @param square The square to check.
      * @param color The color to check.
@@ -1183,7 +1192,7 @@ export class Chess {
      */
     moves(options: MovesOptions = {}, move = this._currentMove): ChessJsMove[] {
         this.chessjs.load(this.fen(move));
-        const moves = this.chessjs.moves({ ...options, verbose: true });
+        const moves: ChessJsMove[] = this.chessjs.moves({ ...options, verbose: true });
         const nullMove = getNullMove(this.chessjs, { disableNullMoves: this.disableNullMoves, ...options });
         if (nullMove) {
             moves.push(nullMove);

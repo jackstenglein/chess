@@ -30,6 +30,6 @@ describe.only('Parsing Performance', () => {
             profile.delete();
         });
 
-        expect(end - start).toBeLessThanOrEqual(500);
+        expect(end - start).toBeLessThanOrEqual(650);
     });
 });

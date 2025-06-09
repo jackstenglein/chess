@@ -2,7 +2,12 @@ import { PgnMove, DiagramComment } from '@jackstenglein/pgn-parser';
 import { Chess, Move as ChessJsMove, KING, Square } from 'chess.js';
 import { CandidateMove, FEN, MovesOptions } from './Chess';
 
-export type Move = ChessJsMove & {
+export type PickChessJsMove = Pick<
+    ChessJsMove,
+    'color' | 'from' | 'to' | 'piece' | 'captured' | 'promotion' | 'san' | 'lan' | 'before' | 'after'
+>;
+
+export type Move = PickChessJsMove & {
     /** The next mainline move after this one, if it exists. */
     next: Move | null;
 
@@ -212,8 +217,8 @@ export class History {
      * @param chessJsMove The move from the Chess.js library.
      * @returns The Move object for the given data.
      */
-    getMove(ply: number, pgnMove: PgnMove, chessJsMove: ChessJsMove): Move {
-        const move = chessJsMove as Move;
+    getMove(ply: number, pgnMove: PgnMove, chessJsMove: PickChessJsMove): Move {
+        const move = chessJsMove as unknown as Move;
         move.previous = null;
         move.next = null;
         move.ply = ply;
@@ -227,7 +232,6 @@ export class History {
         move.commentMove = pgnMove.commentMove;
         move.commentDiag = convertChesscomHighlights(pgnMove.commentDiag);
         move.materialDifference = getMaterialDifference(chessJsMove.after);
-
         return move;
     }
 
@@ -438,12 +442,12 @@ export function isNullMove(candidate: CandidateMove, chess: Chess): boolean {
     }
 
     const from = chess.get(candidate.from);
-    if (from.type !== KING || from.color !== chess.turn()) {
+    if (from?.type !== KING || from.color !== chess.turn()) {
         return false;
     }
 
     const to = chess.get(candidate.to);
-    return to.type === KING && to.color !== chess.turn();
+    return to?.type === KING && to.color !== chess.turn();
 }
 
 /**
@@ -453,7 +457,7 @@ export function isNullMove(candidate: CandidateMove, chess: Chess): boolean {
  * @param chess The Chess.js instance.
  * @returns A Chess.js Move object for a null move, or null if a null move is illegal.
  */
-export function getNullMove(chess: Chess, options: MovesOptions = {}): ChessJsMove | null {
+export function getNullMove(chess: Chess, options: MovesOptions = {}): PickChessJsMove | null {
     if (options.disableNullMoves || (options.piece && options.piece !== KING)) {
         return null;
     }
@@ -486,7 +490,6 @@ export function getNullMove(chess: Chess, options: MovesOptions = {}): ChessJsMo
                         from,
                         to,
                         piece: KING,
-                        flags: 'n',
                         san: 'Z0',
                         lan: 'Z0',
                         before,

@@ -949,7 +949,7 @@ describe('Chess - Miscellaneous', () => {
     });
 });
 
-describe.only('forceVariation', () => {
+describe('forceVariation', () => {
     it(`should load PGN with forced variation`, () => {
         const chess = new Chess({ pgn: `1. e4 (1. e4 e5)` });
         expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5) *`);
@@ -989,5 +989,28 @@ describe.only('forceVariation', () => {
         expect(chess.history()[0].san).toBe('e4');
         expect(chess.history()[0].variations[0][0]).toBe(move);
         expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5 2. d4 exd4) (1. d4 d5) *`);
+    });
+});
+
+describe('zobrist hashing', () => {
+    it('returns stable hash', () => {
+        const chess = new Chess();
+        const move = chess.move('e4');
+        expect(chess.hash(null)).toBe('3436f01fd716346e');
+        expect(chess.hash(move)).toBe('7dc436b2c931692c');
+    });
+
+    it('returns same hash for transpositions', () => {
+        const chess = new Chess();
+        chess.move('e4');
+        chess.move('e5');
+        chess.move('d4');
+        const hash = chess.hash();
+
+        chess.seek(null);
+        chess.move('d4');
+        chess.move('e5');
+        chess.move('e4');
+        expect(chess.hash()).toBe(hash);
     });
 });
