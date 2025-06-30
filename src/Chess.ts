@@ -799,7 +799,8 @@ export class Chess {
     /**
      * Forces a variation by making the given move a variation of itself. The given move and its
      * continuation becomes the variation, and a new variation containing just the given move becomes
-     * the new mainline. If the move is null or is not in the mainline, this function is a no-op.
+     * the new mainline. If the move is null or is not in the mainline, this function is a no-op. The
+     * move's comment and commands are moved to the new move in the mainline.
      * @param move The move to force a variation. This function is a no-op if move is null or not in the mainline.
      * @param skipSeek If true, do not seek to the given move. Defaults to false.
      */
@@ -810,6 +811,11 @@ export class Chess {
 
         try {
             const moveResult = this.pgn.history.addMove(move.san, { previous: move.previous });
+            moveResult.commentAfter = move.commentAfter;
+            moveResult.commentDiag = move.commentDiag;
+            move.commentAfter = undefined;
+            move.commentDiag = undefined;
+
             publishEvent(this.observers, {
                 type: EventType.NewVariation,
                 move: moveResult,

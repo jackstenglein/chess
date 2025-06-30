@@ -990,6 +990,28 @@ describe('forceVariation', () => {
         expect(chess.history()[0].variations[0][0]).toBe(move);
         expect(chess.renderPgn()).toBe(`\n1. e4 (1. e4 e5 2. d4 exd4) (1. d4 d5) *`);
     });
+
+    it('should move comment when forcing a variation', () => {
+        const chess = new Chess({
+            pgn: `1. e4 {Here white resigned due to the following line} (1. d4 d5) e5 2. d4 exd4`,
+        });
+        const move = chess.history()[0];
+        chess.forceVariation(move);
+        expect(chess.history()[0].san).toBe('e4');
+        expect(chess.history()[0].variations[0][0]).toBe(move);
+        expect(chess.renderPgn()).toBe(
+            `\n1. e4 { Here white resigned due to the following line } (1. e4 e5 2. d4 exd4) (1. d4 d5) *`,
+        );
+    });
+
+    it('should move comment diag when forcing a variation', () => {
+        const chess = new Chess({
+            pgn: `1. e4 {[%clk 1:00:00]} (1. d4 d5) e5 2. d4 exd4`,
+        });
+        const move = chess.history()[0];
+        chess.forceVariation(move);
+        expect(chess.renderPgn()).toBe(`\n1. e4 { [%clk 1:00:00] } (1. e4 e5 2. d4 exd4) (1. d4 d5) *`);
+    });
 });
 
 describe('zobrist hashing', () => {
