@@ -192,6 +192,17 @@ export class Chess {
      * @param fen The FEN to load.
      */
     load(fen: string) {
+        // Default the FEN to have move number 1 if it is invalid. This
+        // handles the case where chessbase exports incorrectly have move 0.
+        const tokens = fen.split(' ');
+        if (tokens.length >= 6) {
+            const moveNumber = parseInt(tokens[5]);
+            if (isNaN(moveNumber) || moveNumber < 1) {
+                tokens[5] = '1';
+                fen = tokens.join(' ');
+            }
+        }
+
         this.chessjs.load(fen);
         this.pgn = new Pgn({ fen });
         this._currentMove = null;

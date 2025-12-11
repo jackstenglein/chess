@@ -20,6 +20,13 @@ describe('Chess - Constructing/Loading', () => {
         expect(chess.get('e1')?.color).toBe('w');
     });
 
+    it('should load a FEN with incorrect move number', () => {
+        const fen = '7k/7P/7P/1p6/6K1/8/8/8 w - - 0 0';
+        const chess = new Chess({ fen });
+        expect(chess.pgn.header.tags.FEN).toBe('7k/7P/7P/1p6/6K1/8/8/8 w - - 0 1');
+        expect(chess.fen()).toBe('7k/7P/7P/1p6/6K1/8/8/8 w - - 0 1');
+    });
+
     it('should load a pgn with SetUp and FEN', () => {
         const pgn = `[SetUp "1"]
 [FEN "4k3/pppppppp/8/8/8/8/PPPPPPPP/4K3 w - - 0 1"]
