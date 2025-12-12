@@ -2,7 +2,7 @@ import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece }
 import { Move, getNullMove, renderVariation, PickChessJsMove as ChessJsMove } from './History';
 import { Pgn, RenderOptions, wrap } from './Pgn';
 import { DiagramComment } from '@jackstenglein/pgn-parser';
-import { Header } from './Header';
+import { fixFenMoveNumber, Header } from './Header';
 
 export { SQUARES, Square, PieceSymbol };
 
@@ -192,18 +192,7 @@ export class Chess {
      * @param fen The FEN to load.
      */
     load(fen: string) {
-        // Default the FEN to have move number 1 if it is invalid. This
-        // handles the case where chessbase exports incorrectly have move 0.
-        const tokens = fen.split(' ');
-        if (tokens.length >= 6) {
-            const moveNumber = parseInt(tokens[5]);
-            if (isNaN(moveNumber) || moveNumber < 1) {
-                tokens[5] = '1';
-                fen = tokens.join(' ');
-            }
-        }
-
-        this.chessjs.load(fen);
+        fen = fixFenMoveNumber(fen);
         this.pgn = new Pgn({ fen });
         this._currentMove = null;
         publishEvent(this.observers, { type: EventType.Initialized, fen });
@@ -216,7 +205,6 @@ export class Chess {
     loadPgn(pgn: string) {
         this.pgn = new Pgn({ pgn });
         this._currentMove = this.lastMove();
-        this.chessjs.load(this.fen());
         publishEvent(this.observers, { type: EventType.Initialized, pgn });
     }
 

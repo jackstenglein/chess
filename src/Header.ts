@@ -24,6 +24,9 @@ export class Header {
         } else if (pgn) {
             this.initFromString(pgn);
         }
+        if (this.tags.FEN) {
+            this.tags.FEN = fixFenMoveNumber(this.tags.FEN);
+        }
     }
 
     /**
@@ -131,4 +134,22 @@ export class Header {
 
 function escapeValue(value: string): string {
     return value.replace(/"/g, `\\"`);
+}
+
+/**
+ * Returns the given FEN with the move number set to 1 if it is
+ * currently not a number or is less than 1. Valid FENs are returned unchanged.
+ * @param fen The FEN to fix.
+ * @returns The fixed FEN.1`
+ */
+export function fixFenMoveNumber(fen: string): string {
+    const tokens = fen.split(' ');
+    if (tokens.length >= 6) {
+        const moveNumber = parseInt(tokens[5]);
+        if (isNaN(moveNumber) || moveNumber < 1) {
+            tokens[5] = '1';
+            fen = tokens.join(' ');
+        }
+    }
+    return fen;
 }

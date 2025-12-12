@@ -27,6 +27,33 @@ describe('Chess - Constructing/Loading', () => {
         expect(chess.fen()).toBe('7k/7P/7P/1p6/6K1/8/8/8 w - - 0 1');
     });
 
+    it('should load a PGN with incorrect move number', () => {
+        const pgn = `[Event "?"]
+[Site "?"]
+[Date "2025.01.15"]
+[Round "?"]
+[White "Geometry of the chessboard"]
+[Black "Beginner"]
+[Result "*"]
+[Annotator "srmci"]
+[SetUp "1"]
+[FEN "7k/7P/7P/1p6/6K1/8/8/8 w - - 0 0"]
+[PlyCount "9"]
+[SourceVersionDate "2025.01.09"]
+
+{[%cal Rg4d7,Rd7b5,Gg4e2,Ge2b5,Yg4e4,Ye4d5,Yd5b5][%evp 0,8,0,0,0,-1032,-29972,
+-29971,-29972,-29973,-29976] [#] The geometry of the chessboard can be
+deceptive. When trying to catch a Passed Pawn not every path can be considered
+equal. Here, there are many paths the White king can take towards the Black
+Passed Pawn, but some are better than others.} 1. Kf3 (1. Kf5 b4 2. Ke5 $2 {
+Here White chooses poorly.} b3 3. Kd4 b2 4. Kc3 b1=Q $19) 1... b4 2. Ke2 b3 3.
+Kd1 b2 4. Kc2 b1=Q+ 5. Kxb1 $11 *`;
+
+        const chess = new Chess({ pgn });
+        expect(chess.setUpFen()).toBe('7k/7P/7P/1p6/6K1/8/8/8 w - - 0 1');
+        expect(chess.history()[0].ply).toBe(1);
+    });
+
     it('should load a pgn with SetUp and FEN', () => {
         const pgn = `[SetUp "1"]
 [FEN "4k3/pppppppp/8/8/8/8/PPPPPPPP/4K3 w - - 0 1"]
