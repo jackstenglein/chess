@@ -205,6 +205,15 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         const chess = new Chess({ pgn: `1. e4 +=` });
         expect(chess.history()[0].nags?.[0]).toBe('$14');
     });
+
+    it('should load evals mixed with normal comments', () => {
+        const chess = new Chess({
+            pgn: `{ [%cal Rg4f5] (-5.03 → -2.48) Blunder. Rxh1 was best. [%eval -2.48] (player\'s move was Bf5) } 22. Rdg1  0-1`,
+        });
+        expect(chess.pgn.gameComment.colorArrows).toEqual(['Rg4f5']);
+        expect(chess.pgn.gameComment.eval).toBe(-2.48);
+        expect(chess.pgn.gameComment.comment).toBe("(-5.03 → -2.48) Blunder. Rxh1 was best. (player's move was Bf5)");
+    });
 });
 
 describe('Chess - Move Traversal', () => {
