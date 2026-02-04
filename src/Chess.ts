@@ -193,6 +193,7 @@ export class Chess {
      */
     load(fen: string) {
         fen = fixFenMoveNumber(fen);
+        new ChessJs(fen); // Will throw an error for invalid FENs
         this.pgn = new Pgn({ fen });
         this._currentMove = null;
         publishEvent(this.observers, { type: EventType.Initialized, fen });

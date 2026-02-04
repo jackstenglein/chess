@@ -206,18 +206,27 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         const fen = '4k3/pppppppp/8/8/8/8/PPPPPP/4K3 w - - 0 1';
         try {
             new Chess({ fen });
-            fail();
+            expect(false).toBeTruthy();
         } catch (e) {
-            // OK
+            expect(e).toBeDefined();
         }
         try {
             const chess = new Chess();
             chess.load(fen);
-            fail();
+            expect(false).toBeTruthy();
         } catch (e) {
-            // OK
+            expect(e).toBeDefined();
         }
     });
+
+    it('should not load random word as FEN', () => {
+        try {
+            new Chess({ fen: 'win' });
+            expect(false).toBeTruthy();
+        } catch (e) {
+            expect(e).toBeDefined();
+        }
+    })
 
     it('should load different PGNs and then work correctly', () => {
         const fen = 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2';
