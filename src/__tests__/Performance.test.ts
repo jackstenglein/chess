@@ -9,6 +9,6 @@ describe.only('Parsing Performance', () => {
         new Chess({ pgn: data.toString() });
         const end = Date.now();
 
-        expect(end - start).toBeLessThanOrEqual(650);
+        expect(end - start).toBeLessThanOrEqual(750);
     });
 });

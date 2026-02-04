@@ -226,7 +226,7 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         } catch (e) {
             expect(e).toBeDefined();
         }
-    })
+    });
 
     it('should load different PGNs and then work correctly', () => {
         const fen = 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2';
