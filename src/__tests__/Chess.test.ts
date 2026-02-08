@@ -268,7 +268,7 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
 [EndDate "2026.02.05"]
 [Link "https://www.chess.com/game/daily/925635819"]
 
-1. e4 {[%clk 2:03:04][%timestamp 73840]} 1... e5`
+1. e4 {[%clk 2:03:04][%timestamp 73840]} 1... e5`,
         });
         expect(chess.header().getValue('Event')).toBe(`Let's Play!`);
     });
