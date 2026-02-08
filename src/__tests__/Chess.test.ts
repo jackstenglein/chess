@@ -250,6 +250,28 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         expect(chess.pgn.gameComment.eval).toBe(-2.48);
         expect(chess.pgn.gameComment.comment).toBe("(-5.03 → -2.48) Blunder. Rxh1 was best. (player's move was Bf5)");
     });
+
+    it(`should load chess.com let's play header`, () => {
+        const chess = new Chess({
+            pgn: `[Event "Let\\'s Play!"]
+[Site "Chess.com"]
+[Date "2026.02.03"]
+[Round "?"]
+[White "carson2626"]
+[Black "JackStenglein"]
+[Result "0-1"]
+[TimeControl "1/86400"]
+[WhiteElo "1150"]
+[BlackElo "1650"]
+[Termination "JackStenglein won by checkmate"]
+[ECO "C70"]
+[EndDate "2026.02.05"]
+[Link "https://www.chess.com/game/daily/925635819"]
+
+1. e4 {[%clk 2:03:04][%timestamp 73840]} 1... e5`
+        });
+        expect(chess.header().getValue('Event')).toBe(`Let's Play!`);
+    });
 });
 
 describe('Chess - Move Traversal', () => {
