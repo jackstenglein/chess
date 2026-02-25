@@ -272,6 +272,13 @@ Ke7 19. Qxh4+ f6 20. Qxf4 1-0`;
         });
         expect(chess.header().getValue('Event')).toBe(`Let's Play!`);
     });
+
+    it(`should load commands with no values`, () => {
+        const chess = new Chess({
+            pgn: `1. e4 {[%EOG]}`,
+        });
+        expect(chess.currentMove()?.commentDiag?.EOG).toBe(true);
+    });
 });
 
 describe('Chess - Move Traversal', () => {
