@@ -401,6 +401,13 @@ trick problem :-) Re2 doesn't work so black should play Nf8 with equality } (12.
         const pgn = new Pgn({ pgn: pgnString });
         expect(pgn.render()).toBe(pgnString);
     });
+
+    it('should read and render a PGN with 0.5 for draws', () => {
+        const gamePgn = '[Result "0.5 - 0.5"]\n\n1. e4 e5 0.5 - 0.5';
+        const pgn = new Pgn({ pgn: gamePgn });
+
+        expect(pgn.render()).toBe('[Result "1/2-1/2"]\n\n1. e4 e5 1/2-1/2');
+    });
 });
 
 // [Event "Test Exercise Study: Chapter 5"]
