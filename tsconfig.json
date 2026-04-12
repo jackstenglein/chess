@@ -1,12 +1,13 @@
 {
     "compilerOptions": {
         "esModuleInterop": true,
-        "moduleResolution": "node",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
         "removeComments": false,
         "sourceMap": false,
         "strict": true,
         "target": "ES2015"
     },
     "include": ["src"],
-    "exclude": ["node_modules", "**/__tests__/*"]
+    "exclude": ["node_modules"]
 }
