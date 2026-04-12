@@ -159,6 +159,12 @@ export class History {
                 let previousMove = parent;
                 const variation: Move[] = [];
 
+                if (mainVariant) {
+                    mainVariant.variations.unshift(variation);
+                } else {
+                    moves = variation;
+                }
+
                 for (const pgnMove of pgnMoves) {
                     const notation = pgnMove.notation.notation;
 
@@ -195,12 +201,6 @@ export class History {
                     previousMove = move;
 
                     ply++;
-                }
-
-                if (mainVariant) {
-                    mainVariant.variations.unshift(variation);
-                } else {
-                    moves = variation;
                 }
             } catch (err) {
                 console.error(err);
