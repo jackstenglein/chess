@@ -1145,12 +1145,17 @@ export class Chess {
     }
 
     /**
-     * Returns true if the game is drawn (50-move rule, insufficient material, threefold 
+     * Returns true if the game is drawn (50-move rule, insufficient material, threefold
      * repetition, or stalemate).
      * @param move The move to check for a draw. Defaults to the current move.
      */
     isDraw(move = this._currentMove): boolean {
-        return this.isInsufficientMaterial(move) || this.isStalemate(move) || this.isThreefoldRepetition(move) || this.isDrawByFiftyMoves(move);
+        return (
+            this.isInsufficientMaterial(move) ||
+            this.isStalemate(move) ||
+            this.isThreefoldRepetition(move) ||
+            this.isDrawByFiftyMoves(move)
+        );
     }
 
     /**
