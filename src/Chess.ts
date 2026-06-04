@@ -4,7 +4,8 @@ import { Pgn, RenderOptions, wrap } from './Pgn';
 import { DiagramComment } from '@jackstenglein/pgn-parser';
 import { fixFenMoveNumber, Header } from './Header';
 
-export { SQUARES, Square, PieceSymbol };
+export { SQUARES };
+export type { Square, PieceSymbol };
 
 export const PIECES = {
     p: { name: 'pawn', value: 1 },
@@ -1135,22 +1136,21 @@ export class Chess {
     }
 
     /**
-     * Returns true if the game is drawn (50-move rule or insufficient material).
-     * @param move The move to check for a draw. Defaults to the current move.
-     */
-    isDraw(move = this._currentMove): boolean {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
-        return this.chessjs.isDraw();
-    }
-
-    /**
      * Returns true if the game has ended via checkmate, stalemate, draw, threefold repetition,
      * or insufficient material.
      * @param move The move to check. Defaults to the current move.
      */
     isGameOver(move = this._currentMove): boolean {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
-        return this.chessjs.isGameOver();
+        return this.isCheckmate(move) || this.isDraw(move);
+    }
+
+    /**
+     * Returns true if the game is drawn (50-move rule, insufficient material, threefold 
+     * repetition, or stalemate).
+     * @param move The move to check for a draw. Defaults to the current move.
+     */
+    isDraw(move = this._currentMove): boolean {
+        return this.isInsufficientMaterial(move) || this.isStalemate(move) || this.isThreefoldRepetition(move) || this.isDrawByFiftyMoves(move);
     }
 
     /**
@@ -1176,8 +1176,40 @@ export class Chess {
      * @param move The move to check for three-fold repetition. Defaults to the current move.
      */
     isThreefoldRepetition(move = this._currentMove): boolean {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
-        return this.chessjs.isThreefoldRepetition();
+        const positionCounts = new Map<string, number>();
+        while (move) {
+            const fen = normalizeFen(move.after);
+            const repetitions = (positionCounts.get(fen) ?? 0) + 1;
+            if (repetitions >= 3) {
+                return true;
+            }
+            positionCounts.set(fen, repetitions);
+            move = move.previous;
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the game is drawn by the 50-move rule (no pawn pushes or
+     * captures for 100 ply).
+     * @param move The move to check for a draw. Defaults to the current move.
+     */
+    isDrawByFiftyMoves(move = this._currentMove): boolean {
+        if ((move?.ply ?? 0) < 100) {
+            return false;
+        }
+        let ply = 0;
+        while (move) {
+            if (move.piece === 'p' || move.captured) {
+                return false;
+            }
+            ply++;
+            if (ply >= 100) {
+                return true;
+            }
+            move = move.previous;
+        }
+        return false;
     }
 
     /**

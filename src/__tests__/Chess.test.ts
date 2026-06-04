@@ -1125,3 +1125,50 @@ describe('zobrist hashing', () => {
         expect(chess.hash()).toBe(hash);
     });
 });
+
+describe('draws', () => {
+    it('handles stalemate', () => {
+        let chess = new Chess({ fen: '4k3/4P3/4K3/8/8/8/8/8 b - - 0 1' });
+        expect(chess.isStalemate()).toBe(true);
+        expect(chess.isDraw()).toBe(true);
+
+        chess = new Chess({ fen: '4k3/4P3/4K3/8/8/8/8/8 w - - 0 1' });
+        expect(chess.isStalemate()).toBe(false);
+        expect(chess.isDraw()).toBe(false);
+    });
+
+    it('handles insufficient material', () => {
+        let chess = new Chess();
+        expect(chess.isInsufficientMaterial()).toBe(false);
+        expect(chess.isDraw()).toBe(false);
+
+        chess = new Chess({ fen: '4k3/8/4KB2/8/8/8/8/8 b - - 0 1' });
+        expect(chess.isInsufficientMaterial()).toBe(true);
+        expect(chess.isDraw()).toBe(true);
+    });
+
+    it('handles threefold repetition', () => {
+        let chess = new Chess();
+        expect(chess.isThreefoldRepetition()).toBe(false);
+        expect(chess.isDraw()).toBe(false);
+
+        chess = new Chess({ pgn: '1. e4 e5 2. Nf3 Nf6 3. d4 exd4 4. e5 Ng4 5. h3 Nh6 6. Qxd4 d6 7. exd6 Bxd6 8. Bc4 Qe7+ 9. Be3 Nf5 10. Qc3 Nxe3 11. fxe3 O-O 12. O-O Nc6 13. Kh1 Ne5 14. Bb3 Nxf3 15. Rxf3 Be6 16. Nd2 Bxb3 17. cxb3 Be5 18. Qc2 Rad8 19. Raf1 Qd6 20. Ne4 Qg6 21. Qc4 Bxb2 22. Rg3 Qe6 23. Qa4 Be5 24. Rgf3 a6 25. Nc5 Qb6 26. Nd7 Rxd7 27. Qxd7 f6 28. Qd3 c6 29. Qc4+ Kh8 30. Qe6 Qa5 31. Qe7 Rg8 32. Qxb7 Qxa2 33. Qxc6 Qxb3 34. Qxa6 h6 35. e4 Qc2 36. Qd3 Qc7 37. Qd5 Rd8 38. Qb5 Rb8 39. Qe2 Rb2 40. Qa6 Qc2 41. R3f2 Qxe4 42. Qc8+ Kh7 43. Qf5+ Qxf5 44. Rxf5 Kg6 45. R5f3 h5 46. R3f2 Rb3 47. Rf3 Rb2 48. R3f2 Rb3 49. Rf3 Rb2 50. R3f2 Rb3 51. Rf3 Rb2 52. R3f2 Rb3 53. Rf3 Rb2 54. R3f2 Rb3 55. Rf3 Rb2 56. R3f2 Rb3 57. Rf3 Rb2 58. R3f2 Rb3 *'})
+        expect(chess.isThreefoldRepetition()).toBe(true);
+        expect(chess.isDraw()).toBe(true);
+    });
+
+    it('handles fifty move rule', () => {
+        let chess = new Chess();
+        expect(chess.isDrawByFiftyMoves()).toBe(false);
+        expect(chess.isDraw()).toBe(false);
+
+        chess = new Chess({ pgn: `
+[FEN "4k3/7b/4KB2/8/8/8/8/8 b - - 0 1"]
+[SetUp "1"]
+
+1... Bg8+ 2. Kd6 Kf7 3. Ba1 Bh7 4. Bb2 Bf5 5. Ba1 Kg6 6. Bb2 Be4 7. Ba1 Kf5 8. Bb2 Bc2 9. Ba1 Bb1 10. Bb2 Bd3 11. Ba1 Ba6 12. Bb2 Bb5 13. Ba1 Ba4 14. Bb2 Bb3 15. Ba1 Ba2 16. Bb2 Bb1 17. Ba1 Bc2 18. Bb2 Bd1 19. Ba1 Be2 20. Bb2 Bf1 21. Ba1 Bg2 22. Bb2 Bh1 23. Ba1 Bg2 24. Bb2 Bh3 25. Bc1 Bg4 26. Bb2 Bh5 27. Ba1 Kf4 28. Bb2 Bg6 29. Ba1 Bh7 30. Bb2 Bg8 31. Ba1 Bf7 32. Bb2 Be8 33. Ba1 Bb5 34. Bb2 Ba6 35. Ba1 Bb7 36. Bb2 Ba8 37. Ba1 Ke3 38. Bb2 Be4 39. Ba1 Bf3 40. Bb2 Bg2 41. Ba1 Bh1 42. Bb2 Bg2 43. Ba1 Bh3 44. Kc5 Bg4 45. Bb2 Bh5 46. Ba1 Bf3 47. Bb2 Be2 48. Ba1 Bd1 49. Bb2 Bc2 50. Ba1 Bb1 51. Bb2 1/2-1/2`});
+    
+        expect(chess.isDrawByFiftyMoves()).toBe(true);
+        expect(chess.isDraw()).toBe(true);
+    });
+});
