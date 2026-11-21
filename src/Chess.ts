@@ -1,5 +1,5 @@
 import { Chess as ChessJs, SQUARES, Square, PieceSymbol, Piece as ChessJsPiece } from 'chess.js';
-import { Move, getNullMove, renderVariation, PickChessJsMove as ChessJsMove } from './History';
+import { Move, getMaterialDifference, getNullMove, renderVariation, PickChessJsMove as ChessJsMove } from './History';
 import { Pgn, RenderOptions, wrap } from './Pgn';
 import { DiagramComment } from '@jackstenglein/pgn-parser';
 import { fixFenMoveNumber, Header } from './Header';
@@ -119,9 +119,8 @@ export interface ChessProps {
 
 /**
  * Returns the normalized version of the provided FEN. FENs are normalized in the following way:
- * 1. The en passant target square is set to -, unless en passant is currently a legal move.
- * 2. The halfmove clock field is set to 0.
- * 3. The fullmove clock field is set to 1.
+ * 1. The halfmove clock field is set to 0.
+ * 2. The fullmove clock field is set to 1.
  *
  * @param fen The FEN to normalize.
  * @returns The normalized FEN.
@@ -194,7 +193,7 @@ export class Chess {
      */
     load(fen: string) {
         fen = fixFenMoveNumber(fen);
-        new ChessJs(fen); // Will throw an error for invalid FENs
+        this.chessjs.load(fen); // Will throw an error for invalid FENs
         this.pgn = new Pgn({ fen });
         this._currentMove = null;
         publishEvent(this.observers, { type: EventType.Initialized, fen });
@@ -207,6 +206,7 @@ export class Chess {
     loadPgn(pgn: string) {
         this.pgn = new Pgn({ pgn });
         this._currentMove = this.lastMove();
+        this.seek(this._currentMove, true);
         publishEvent(this.observers, { type: EventType.Initialized, pgn });
     }
 
@@ -455,22 +455,14 @@ export class Chess {
         if (move.ply < parent.ply) {
             return false;
         }
-        if (this.isInMainline(parent)) {
-            return true;
-        }
-        if (this.isInMainline(move)) {
-            return false;
-        }
 
-        const parentRoot = parent.variation;
-        let moveRoot: Move[] | undefined = move.variation;
-        do {
-            if (moveRoot === parentRoot) {
+        let current: Move | null = move;
+        while (current) {
+            if (current === parent) {
                 return true;
             }
-            moveRoot = moveRoot[0].previous?.variation;
-        } while (moveRoot && !this.isInMainline(moveRoot[0]));
-
+            current = current.previous;
+        }
         return false;
     }
 
@@ -601,23 +593,27 @@ export class Chess {
         const index = move.variation.findIndex((element) => {
             return element.ply === move.ply;
         });
-        move.variation.splice(index);
-
+        // Compute before splice: for the first move, firstMove() is this move until history is emptied
         const mainlineMove = move.previous ? move.previous.next : this.firstMove();
+        move.variation.splice(index);
 
         if (mainlineMove === move) {
             if (move.previous) {
                 move.previous.next = null;
 
                 if (move.variations.length > 0) {
-                    move.previous.next = move.variations[0][0];
-                    move.previous.variation.push(...move.previous.next.variation);
-                    move.previous.next.variation = move.previous.variation;
-                    move.previous.next.variations = move.variations.slice(1);
+                    const promoted = move.variations[0];
+                    move.previous.next = promoted[0];
+                    move.previous.variation.push(...promoted);
+                    for (const promotedMove of promoted) {
+                        promotedMove.variation = move.previous.variation;
+                    }
+                    promoted[0].variations = move.variations.slice(1);
                 }
             } else if (move.variations.length > 0) {
-                this.pgn.history.moves = move.variations[0][0].variation;
-                move.variations[0][0].variations = move.variations.slice(1);
+                const promoted = move.variations[0];
+                this.pgn.history.moves = promoted;
+                promoted[0].variations = move.variations.slice(1);
             }
         } else if (index === 0 && mainlineMove) {
             mainlineMove.variations = mainlineMove.variations.filter((v) => v.length > 0);
@@ -654,6 +650,14 @@ export class Chess {
         this.pgn.gameComment.comment = move.previous.commentAfter;
         this.pgn.history.setUpFen = move.before;
         this.pgn.history.setUpPly = move.ply;
+        this.pgn.history.setUpMaterialDifference = getMaterialDifference(move.before);
+
+        const current = this._currentMove;
+        const keepCurrent =
+            current === move ||
+            (current != null &&
+                (this.isDescendant(move, current) ||
+                    move.variations.some((v) => current.variation === v || v.includes(current))));
 
         move.previous = null;
 
@@ -661,7 +665,7 @@ export class Chess {
             variation[0].previous = null;
         }
 
-        if (!this.isDescendant(move)) {
+        if (!keepCurrent) {
             this.seek(move);
         }
 
@@ -1014,7 +1018,7 @@ export class Chess {
 
         let result = this.pgn.renderHeader(options);
         if (result.includes('[FEN')) {
-            result.replace(/\[FEN ".*"\]/, `[FEN "${this.fen(move.previous)}"]`);
+            result = result.replace(/\[FEN ".*"\]/, `[FEN "${this.fen(move.previous)}"]`);
         } else {
             if (result.endsWith('\n')) {
                 result = result.slice(0, -1);
@@ -1182,14 +1186,18 @@ export class Chess {
      */
     isThreefoldRepetition(move = this._currentMove): boolean {
         const positionCounts = new Map<string, number>();
-        while (move) {
-            const fen = normalizeFen(move.after);
+        const setupFen = normalizeFen(this.setUpFen());
+        positionCounts.set(setupFen, 1);
+
+        let current = move;
+        while (current) {
+            const fen = normalizeFen(current.after);
             const repetitions = (positionCounts.get(fen) ?? 0) + 1;
             if (repetitions >= 3) {
                 return true;
             }
             positionCounts.set(fen, repetitions);
-            move = move.previous;
+            current = current.previous;
         }
         return false;
     }
@@ -1200,21 +1208,8 @@ export class Chess {
      * @param move The move to check for a draw. Defaults to the current move.
      */
     isDrawByFiftyMoves(move = this._currentMove): boolean {
-        if ((move?.ply ?? 0) < 100) {
-            return false;
-        }
-        let ply = 0;
-        while (move) {
-            if (move.piece === 'p' || move.captured) {
-                return false;
-            }
-            ply++;
-            if (ply >= 100) {
-                return true;
-            }
-            move = move.previous;
-        }
-        return false;
+        const halfmove = parseInt(this.fen(move).split(' ')[4] ?? '0', 10);
+        return !isNaN(halfmove) && halfmove >= 100;
     }
 
     /**

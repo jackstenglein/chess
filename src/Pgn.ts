@@ -57,7 +57,7 @@ export class Pgn {
         }
 
         this.header = new Header({ tags: parseTree.tags });
-        if (fen !== FEN.start) {
+        if (fen !== FEN.start && !this.header.tags.FEN) {
             this.header.tags.SetUp = '1';
             this.header.tags.FEN = fen;
         }
@@ -108,15 +108,16 @@ export class Pgn {
 
     /**
      * Returns the game comment as a PGN string.
-     * @param options The PGN render options. If skipComments is true, an empty string is returned.
+     * @param options The PGN render options. If skipComments is true, text comments are omitted
+     * but diagram commands (arrows, clocks, etc.) are still rendered unless separately skipped.
      */
     renderGameComment(options: RenderOptions = {}) {
-        if (options.skipComments || !this.gameComment) {
+        if (!this.gameComment) {
             return '';
         }
 
         let result = '';
-        if (this.gameComment.comment) {
+        if (!options.skipComments && this.gameComment.comment) {
             result = `{ ${this.gameComment.comment} }`;
         }
         result += renderCommands(this.gameComment, options);

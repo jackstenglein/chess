@@ -133,7 +133,7 @@ export class Header {
 }
 
 function escapeValue(value: string): string {
-    return value.replace(/"/g, `\\"`);
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 /**

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { Chess } from '../Chess';
 
-describe.only('Parsing Performance', () => {
+describe('Parsing Performance', () => {
     it('should read massive PGN', () => {
         const data = fs.readFileSync(process.cwd() + '/src/__tests__/data/massive.pgn');
 

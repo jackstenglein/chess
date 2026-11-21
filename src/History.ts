@@ -152,19 +152,19 @@ export class History {
         const stack: TraverseStackItem[] = [props];
 
         while (stack.length > 0) {
+            let { pgnMoves, fen, parent, mainVariant, ply } = stack.pop()!;
+            chess.load(fen, { skipValidation: true });
+
+            let previousMove = parent;
+            const variation: Move[] = [];
+
+            if (mainVariant) {
+                mainVariant.variations.unshift(variation);
+            } else {
+                moves = variation;
+            }
+
             try {
-                let { pgnMoves, fen, parent, mainVariant, ply } = stack.pop()!;
-                chess.load(fen, { skipValidation: true });
-
-                let previousMove = parent;
-                const variation: Move[] = [];
-
-                if (mainVariant) {
-                    mainVariant.variations.unshift(variation);
-                } else {
-                    moves = variation;
-                }
-
                 for (const pgnMove of pgnMoves) {
                     const notation = pgnMove.notation.notation;
 
@@ -173,6 +173,10 @@ export class History {
 
                     if (!chessJsMove) {
                         throw new Error(`Invalid move ${notation} at position ${chess.fen()}`);
+                    }
+
+                    if (notation === nullMoveNotation) {
+                        chess.load(chessJsMove.after, { skipValidation: true });
                     }
 
                     const move = this.getMove(ply, pgnMove, chessJsMove);
@@ -204,6 +208,13 @@ export class History {
                 }
             } catch (err) {
                 console.error(err);
+            }
+
+            if (mainVariant && variation.length === 0) {
+                const emptyIndex = mainVariant.variations.indexOf(variation);
+                if (emptyIndex >= 0) {
+                    mainVariant.variations.splice(emptyIndex, 1);
+                }
             }
         }
 
@@ -403,7 +414,7 @@ function renderVariationRecursive(variation: Move[], needReminder = false, optio
 
         if (!options?.skipVariations && move.variations.length > 0) {
             for (let variation of move.variations) {
-                result += '(' + renderVariation(variation) + ') ';
+                result += '(' + renderVariation(variation, options) + ') ';
                 needReminder = true;
             }
         }
@@ -484,7 +495,6 @@ export function getNullMove(chess: Chess, options: MovesOptions = {}): PickChess
                 }
 
                 if (from && to) {
-                    chess.load(after);
                     return {
                         color,
                         from,
