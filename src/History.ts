@@ -1,6 +1,7 @@
 import { PgnMove, DiagramComment } from '@jackstenglein/pgn-parser';
 import { Chess, Move as ChessJsMove, KING, Square } from 'chess.js';
 import { CandidateMove, FEN, MovesOptions } from './Chess';
+import { fixFenMoveNumber } from './Header';
 
 export type PickChessJsMove = Pick<
     ChessJsMove,
@@ -103,14 +104,15 @@ export class History {
      * @param strict Whether to use the strict SAN parser. Defaults to false.
      */
     constructor(moves: PgnMove[], setUpFen: string = FEN.start, strict = false) {
-        this.setUpFen = setUpFen;
-        this.setUpMaterialDifference = getMaterialDifference(setUpFen);
+        this.setUpFen = fixFenMoveNumber(setUpFen);
+        this.setUpMaterialDifference = getMaterialDifference(this.setUpFen);
 
-        const fenTokens = setUpFen.split(/\s+/);
+        const fenTokens = this.setUpFen.split(/\s+/);
         const colorToPlay = fenTokens[1];
-        const moveNumber = parseInt(fenTokens[5]);
+        const moveNumber = parseInt(fenTokens[5] ?? '1', 10);
+        const safeMoveNumber = isNaN(moveNumber) || moveNumber < 1 ? 1 : moveNumber;
 
-        this.setUpPly = 2 * moveNumber;
+        this.setUpPly = 2 * safeMoveNumber;
         if (colorToPlay === 'w') {
             this.setUpPly -= 1;
         }
@@ -121,7 +123,7 @@ export class History {
             this.moves = this.traverse(
                 {
                     pgnMoves: moves,
-                    fen: setUpFen,
+                    fen: this.setUpFen,
                     ply: this.setUpPly,
                 },
                 strict,

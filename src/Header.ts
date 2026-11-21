@@ -137,19 +137,29 @@ function escapeValue(value: string): string {
 }
 
 /**
- * Returns the given FEN with the move number set to 1 if it is
- * currently not a number or is less than 1. Valid FENs are returned unchanged.
+ * Returns the given FEN with missing halfmove/fullmove fields filled in, and with
+ * the move number set to 1 if it is currently not a number or is less than 1.
+ * Valid full FENs are returned unchanged (aside from an invalid move number).
  * @param fen The FEN to fix.
- * @returns The fixed FEN.1`
+ * @returns The fixed FEN.
  */
 export function fixFenMoveNumber(fen: string): string {
-    const tokens = fen.split(' ');
-    if (tokens.length >= 6) {
-        const moveNumber = parseInt(tokens[5]);
-        if (isNaN(moveNumber) || moveNumber < 1) {
-            tokens[5] = '1';
-            fen = tokens.join(' ');
-        }
+    const tokens = fen.trim().split(/\s+/);
+    if (tokens.length < 4) {
+        return fen;
     }
-    return fen;
+
+    // Pad short FENs: default halfmove clock 0, fullmove number 1
+    if (tokens.length === 4) {
+        tokens.push('0');
+    }
+    if (tokens.length === 5) {
+        tokens.push('1');
+    }
+
+    const moveNumber = parseInt(tokens[5]);
+    if (isNaN(moveNumber) || moveNumber < 1) {
+        tokens[5] = '1';
+    }
+    return tokens.join(' ');
 }

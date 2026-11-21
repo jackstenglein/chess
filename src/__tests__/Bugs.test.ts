@@ -237,3 +237,28 @@ describe('Bugs - Pgn constructor fen override', () => {
         expect(pgn.history.setUpFen).toBe(pgnFen);
     });
 });
+
+describe('Bugs - short FEN and fenOfPly', () => {
+    it('should pad a short FEN so setUpPly is valid and moves work', () => {
+        const shortFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
+        const chess = new Chess({ fen: shortFen });
+
+        expect(chess.pgn.history.setUpPly).toBe(1);
+        expect(Number.isNaN(chess.pgn.history.setUpPly)).toBe(false);
+        expect(chess.setUpFen()).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+
+        const e4 = chess.move('e4');
+        expect(e4).not.toBeNull();
+        expect(e4!.ply).toBe(1);
+    });
+
+    it('should not throw when fenOfPly is past the end of the history', () => {
+        const chess = new Chess();
+        chess.move('e4');
+
+        expect(() => chess.fenOfPly(99)).not.toThrow();
+        expect(chess.fenOfPly(99)).toBeUndefined();
+        expect(chess.fenOfPly(1)).toBe(chess.firstMove()!.fen);
+        expect(chess.fenOfPly(0)).toBe(chess.setUpFen());
+    });
+});

@@ -259,16 +259,17 @@ export class Chess {
 
     /**
      * Returns the FEN of the mainline move with the given ply.
-     * If the ply number is invalid (<= 0), the setup ply is returned.
+     * If the ply number is invalid (<= 0), the setup FEN is returned.
+     * If the ply is beyond the end of the history, undefined is returned.
      * @param plyNumber The ply to get the FEN of.
-     * @returns The FEN of the mainline move with the given ply.
+     * @returns The FEN of the mainline move with the given ply, the setup FEN,
+     * or undefined if the ply is past the end of the history.
      */
-    fenOfPly(plyNumber: number) {
+    fenOfPly(plyNumber: number): string | undefined {
         if (plyNumber > 0) {
-            return this.history()[plyNumber - 1].fen;
-        } else {
-            return this.setUpFen();
+            return this.history()[plyNumber - 1]?.fen;
         }
+        return this.setUpFen();
     }
 
     /**
