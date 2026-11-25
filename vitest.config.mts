@@ -5,5 +5,8 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         include: ['src/**/__tests__/**/*.test.ts', 'src/**/*.{test,spec}.ts'],
+        typecheck: {
+            tsconfig: './tsconfig.vitest.json',
+        },
     },
 });

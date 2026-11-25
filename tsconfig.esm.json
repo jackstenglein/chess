@@ -1,7 +1,12 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
+        "noEmit": false,
+        "module": "ES2020",
         "outDir": "./dist/esm",
-        "module": "esnext"
-    }
+        "declaration": false,
+        "declarationMap": false
+    },
+    "include": ["src"],
+    "exclude": ["node_modules", "**/__tests__/*"]
 }

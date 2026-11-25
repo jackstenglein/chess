@@ -5,9 +5,16 @@
     "main": "dist/cjs/index.js",
     "module": "dist/esm/index.js",
     "types": "dist/types/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/types/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/cjs/index.js"
+        }
+    },
     "scripts": {
         "format": "prettier --write \"src/**/*.ts\"",
-        "build": "npm run format && tsc -b ./tsconfig.cjs.json ./tsconfig.esm.json ./tsconfig.types.json",
+        "build": "npm run format && tsc -p ./tsconfig.cjs.json && tsc -p ./tsconfig.esm.json && tsc -p ./tsconfig.types.json && node ./scripts/fix-dual-package.mjs",
         "test": "vitest run",
         "test:watch": "vitest",
         "prepare": "npm run build",

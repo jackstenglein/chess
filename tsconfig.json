@@ -1,12 +1,20 @@
 {
     "compilerOptions": {
-        "esModuleInterop": true,
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "removeComments": false,
-        "sourceMap": false,
+        "target": "ES2020",
+        "lib": ["ES2020"],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "rootDir": "./src",
         "strict": true,
-        "target": "ES2016"
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "removeComments": false,
+        "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true,
+        "noEmit": true
     },
     "include": ["src"],
     "exclude": ["node_modules", "**/__tests__/*"]
