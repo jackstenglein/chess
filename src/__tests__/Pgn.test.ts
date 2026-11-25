@@ -175,7 +175,7 @@ describe('Pgn', () => {
         });
         expect(5).toBe(pgn.history.moves.length);
         expect('Schaak opheffen').toBe(pgn.header.tags.White);
-        expect('app 037-1').toBe(pgn.header.tags.Annotator);
+        expect('S3').toBe(pgn.header.tags.Annotator);
     });
 
     it('should parse a pgn with only the header', () => {

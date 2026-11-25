@@ -124,7 +124,7 @@ Kd1 b2 4. Kc2 b1=Q+ 5. Kxb1 $11 *`;
         chess.loadPgn(pgn);
         expect(chess.pgn.history.moves.length).toBe(5);
         expect(chess.pgn.header.tags.White).toBe('Schaak opheffen');
-        expect(chess.pgn.header.tags.Annotator).toBe('app 037-1');
+        expect(chess.pgn.header.tags.Annotator).toBe('S3');
     });
 
     it('should provide correct turn after loading a FEN', () => {
