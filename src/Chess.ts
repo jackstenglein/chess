@@ -87,6 +87,34 @@ function publishEvent(observers: Observer[], event: Event) {
     }
 }
 
+/**
+ * Clears links on a detached move subtree so GC can reclaim nodes that are no longer
+ * reachable from the live history (aside from any external references).
+ */
+function detachMoveSubtree(move: Move, keep?: Set<Move>) {
+    if (keep?.has(move)) {
+        return;
+    }
+
+    let current: Move | null = move;
+    while (current) {
+        if (keep?.has(current)) {
+            break;
+        }
+        const next: Move | null = current.next;
+        for (const variation of current.variations) {
+            if (variation.length > 0) {
+                detachMoveSubtree(variation[0], keep);
+            }
+        }
+        current.previous = null;
+        current.next = null;
+        current.variations = [];
+        current.variation = [];
+        current = next;
+    }
+}
+
 /** A potential move to validate or play. */
 export type CandidateMove = string | { from: Square; to: Square; promotion?: string };
 
@@ -149,6 +177,8 @@ export class Chess {
     _currentMove: Move | null;
     chessjs: ChessJs;
     disableNullMoves: boolean;
+    /** FEN currently loaded into chessjs; used to skip redundant loads. */
+    private _loadedFen: string | null = null;
 
     /**
      * Constructs a new Chess instance from the given PGN or FEN.
@@ -169,6 +199,19 @@ export class Chess {
         } else {
             this.load(FEN.start);
         }
+    }
+
+    /**
+     * Loads the given move's position into chessjs if it is not already loaded.
+     * @param move The move whose position to load. Defaults to the current move.
+     */
+    private ensurePosition(move: Move | null = this._currentMove): void {
+        const fen = this.fen(move);
+        if (this._loadedFen === fen) {
+            return;
+        }
+        this.chessjs.load(fen, { skipValidation: true });
+        this._loadedFen = fen;
     }
 
     /**
@@ -194,6 +237,7 @@ export class Chess {
     load(fen: string) {
         fen = fixFenMoveNumber(fen);
         this.chessjs.load(fen); // Will throw an error for invalid FENs
+        this._loadedFen = this.chessjs.fen();
         this.pgn = new Pgn({ fen });
         this._currentMove = null;
         publishEvent(this.observers, { type: EventType.Initialized, fen });
@@ -252,9 +296,9 @@ export class Chess {
      */
     normalizedFen(move = this._currentMove): string {
         if (move) {
-            return normalizeFen(move.fen);
+            return move.normalizedFen ?? normalizeFen(move.fen);
         }
-        return normalizeFen(this.setUpFen());
+        return this.pgn.history.setUpNormalizedFen ?? normalizeFen(this.setUpFen());
     }
 
     /**
@@ -348,11 +392,7 @@ export class Chess {
      * @returns The new current Move.
      */
     seek(move: Move | null, skipPublish = false): Move | null {
-        if (move) {
-            this.chessjs.load(move.fen);
-        } else {
-            this.chessjs.load(this.setUpFen());
-        }
+        this.ensurePosition(move);
 
         const previousMove = this._currentMove;
         this._currentMove = move;
@@ -596,23 +636,24 @@ export class Chess {
         });
         // Compute before splice: for the first move, firstMove() is this move until history is emptied
         const mainlineMove = move.previous ? move.previous.next : this.firstMove();
-        move.variation.splice(index);
+        const removed = move.variation.splice(index);
+        let promoted: Move[] | undefined;
 
         if (mainlineMove === move) {
             if (move.previous) {
                 move.previous.next = null;
 
                 if (move.variations.length > 0) {
-                    const promoted = move.variations[0];
+                    promoted = move.variations[0];
                     move.previous.next = promoted[0];
-                    move.previous.variation.push(...promoted);
                     for (const promotedMove of promoted) {
+                        move.previous.variation.push(promotedMove);
                         promotedMove.variation = move.previous.variation;
                     }
                     promoted[0].variations = move.variations.slice(1);
                 }
             } else if (move.variations.length > 0) {
-                const promoted = move.variations[0];
+                promoted = move.variations[0];
                 this.pgn.history.moves = promoted;
                 promoted[0].variations = move.variations.slice(1);
             }
@@ -630,6 +671,14 @@ export class Chess {
             previousMove: move.previous,
             mainlineMove,
         });
+
+        // Detach removed nodes so retained Move refs don't keep the live tree alive
+        const promotedSet = promoted ? new Set(promoted) : undefined;
+        for (const detached of removed) {
+            if (!promotedSet?.has(detached)) {
+                detachMoveSubtree(detached, promotedSet);
+            }
+        }
     }
 
     /**
@@ -652,6 +701,7 @@ export class Chess {
         this.pgn.history.setUpFen = move.before;
         this.pgn.history.setUpPly = move.ply;
         this.pgn.history.setUpMaterialDifference = getMaterialDifference(move.before);
+        this.pgn.history.setUpNormalizedFen = normalizeFen(move.before);
 
         const current = this._currentMove;
         const keepCurrent =
@@ -761,7 +811,9 @@ export class Chess {
                 variantParent.variation = parentVariation.splice(parentIndex);
                 if (variantRoot.previous) {
                     variantRoot.previous.next = variantRoot;
-                    parentVariation.push(...move.variation);
+                    for (const m of move.variation) {
+                        parentVariation.push(m);
+                    }
                 } else {
                     this.pgn.history.moves = variantRoot.variation;
                 }
@@ -1058,7 +1110,7 @@ export class Chess {
      * @param move The move to get an ASCII diagram of. Defaults to the current move.
      */
     ascii(move = this._currentMove): string {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.ascii();
     }
 
@@ -1068,7 +1120,7 @@ export class Chess {
      * @param move The move to get the position of. Defaults to the current move.
      */
     board(move = this._currentMove) {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.board();
     }
 
@@ -1079,7 +1131,7 @@ export class Chess {
      * @returns The piece on the provided square or null if no piece is there.
      */
     get(square: Square, move = this._currentMove): Piece | null {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         const chessJsPiece = this.chessjs.get(square);
         if (!chessJsPiece) {
             return null;
@@ -1097,7 +1149,7 @@ export class Chess {
      * @returns The castling rights for the given color.
      */
     getCastlingRights(color: Color, move = this._currentMove) {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.getCastlingRights(color);
     }
 
@@ -1106,7 +1158,7 @@ export class Chess {
      * @param move The move after which to get castling rights. Defaults to the current move.
      */
     hash(move = this._currentMove) {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.hash();
     }
 
@@ -1118,7 +1170,7 @@ export class Chess {
      * @returns True if the square is attacked by color.
      */
     isAttacked(square: Square, color: Color, move = this._currentMove): boolean {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.isAttacked(square, color);
     }
 
@@ -1127,7 +1179,7 @@ export class Chess {
      * @param move The move to check for check. Defaults to the current move.
      */
     isCheck(move = this._currentMove): boolean {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.isCheck();
     }
 
@@ -1136,7 +1188,7 @@ export class Chess {
      * @param move The move to check for checkmate. Defaults to the current move.
      */
     isCheckmate(move = this._currentMove): boolean {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.isCheckmate();
     }
 
@@ -1146,7 +1198,14 @@ export class Chess {
      * @param move The move to check. Defaults to the current move.
      */
     isGameOver(move = this._currentMove): boolean {
-        return this.isCheckmate(move) || this.isDraw(move);
+        this.ensurePosition(move);
+        return (
+            this.chessjs.isCheckmate() ||
+            this.chessjs.isInsufficientMaterial() ||
+            this.chessjs.isStalemate() ||
+            this.isThreefoldRepetition(move) ||
+            this.isDrawByFiftyMoves(move)
+        );
     }
 
     /**
@@ -1155,9 +1214,10 @@ export class Chess {
      * @param move The move to check for a draw. Defaults to the current move.
      */
     isDraw(move = this._currentMove): boolean {
+        this.ensurePosition(move);
         return (
-            this.isInsufficientMaterial(move) ||
-            this.isStalemate(move) ||
+            this.chessjs.isInsufficientMaterial() ||
+            this.chessjs.isStalemate() ||
             this.isThreefoldRepetition(move) ||
             this.isDrawByFiftyMoves(move)
         );
@@ -1168,7 +1228,7 @@ export class Chess {
      * @param move The move to check for insufficient material. Defaults to the current move.
      */
     isInsufficientMaterial(move = this._currentMove): boolean {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.isInsufficientMaterial();
     }
 
@@ -1177,7 +1237,7 @@ export class Chess {
      * @param move The move to check for stalemate. Defaults to the current move.
      */
     isStalemate(move = this._currentMove): boolean {
-        this.chessjs.load(this.fen(move), { skipValidation: true });
+        this.ensurePosition(move);
         return this.chessjs.isStalemate();
     }
 
@@ -1187,12 +1247,12 @@ export class Chess {
      */
     isThreefoldRepetition(move = this._currentMove): boolean {
         const positionCounts = new Map<string, number>();
-        const setupFen = normalizeFen(this.setUpFen());
+        const setupFen = this.pgn.history.setUpNormalizedFen ?? normalizeFen(this.setUpFen());
         positionCounts.set(setupFen, 1);
 
         let current = move;
         while (current) {
-            const fen = normalizeFen(current.after);
+            const fen = current.normalizedFen ?? normalizeFen(current.after);
             const repetitions = (positionCounts.get(fen) ?? 0) + 1;
             if (repetitions >= 3) {
                 return true;
@@ -1209,7 +1269,8 @@ export class Chess {
      * @param move The move to check for a draw. Defaults to the current move.
      */
     isDrawByFiftyMoves(move = this._currentMove): boolean {
-        const halfmove = parseInt(this.fen(move).split(' ')[4] ?? '0', 10);
+        const fen = move?.after ?? this.setUpFen();
+        const halfmove = parseInt(fen.split(' ')[4] ?? '0', 10);
         return !isNaN(halfmove) && halfmove >= 100;
     }
 
@@ -1218,8 +1279,9 @@ export class Chess {
      * @param move The move to get the number of. Defaults to the current move.
      */
     moveNumber(move = this._currentMove): number {
-        this.chessjs.load(this.fen(move));
-        return this.chessjs.moveNumber();
+        const fen = this.fen(move);
+        const moveNumber = parseInt(fen.split(' ')[5] ?? '1', 10);
+        return isNaN(moveNumber) || moveNumber < 1 ? 1 : moveNumber;
     }
 
     /**
@@ -1230,9 +1292,13 @@ export class Chess {
      * @returns A list of legal moves.
      */
     moves(options: MovesOptions = {}, move = this._currentMove): ChessJsMove[] {
-        this.chessjs.load(this.fen(move));
+        this.ensurePosition(move);
         const moves: ChessJsMove[] = this.chessjs.moves({ ...options, verbose: true });
-        const nullMove = getNullMove(this.chessjs, { disableNullMoves: this.disableNullMoves, ...options });
+        const nullMove = getNullMove(this.chessjs, {
+            disableNullMoves: this.disableNullMoves,
+            ...options,
+            legalMoveCount: moves.length,
+        });
         if (nullMove) {
             moves.push(nullMove);
         }
@@ -1251,7 +1317,7 @@ export class Chess {
         color: Color | undefined = undefined,
         move = this._currentMove,
     ): Piece[] {
-        this.chessjs.load(this.fen(move));
+        this.ensurePosition(move);
         let result: Piece[] = [];
 
         for (const ranks of this.chessjs.board()) {

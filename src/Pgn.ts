@@ -3,7 +3,7 @@
  * Repository: https://github.com/jackstenglein/chess
  * License: MIT, see file 'LICENSE'
  */
-import { parse, DiagramComment, split, StartRule } from '@jackstenglein/pgn-parser';
+import { parse, DiagramComment, StartRule } from '@jackstenglein/pgn-parser';
 import { Header } from './Header';
 import { History, HistoryRenderOptions, renderCommands } from './History';
 import { FEN } from './Chess';
@@ -43,14 +43,11 @@ export class Pgn {
             return;
         }
 
-        let startRule: StartRule = 'game';
-        const games = split(pgn);
-        if (games.length < 1 || games[0].pgn.trim().length === 0) {
-            startRule = 'tags';
-        }
+        // Avoid split()+parse() double-scan: detect empty movetext cheaply
+        const movetext = pgn.replace(/\[[^\]]*\]/g, '').trim();
+        const startRule: StartRule = movetext.length === 0 ? 'tags' : 'game';
 
         const parseTree = parse(pgn, { startRule });
-        // console.log(JSON.stringify(parseTree, null, 2));
 
         if (parseTree.gameComment) {
             this.gameComment = parseTree.gameComment;

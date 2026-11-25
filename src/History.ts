@@ -1,6 +1,6 @@
 import { PgnMove, DiagramComment } from '@jackstenglein/pgn-parser';
 import { Chess, Move as ChessJsMove, KING, Square } from 'chess.js';
-import { CandidateMove, FEN, MovesOptions } from './Chess';
+import { CandidateMove, FEN, MovesOptions, normalizeFen } from './Chess';
 import { fixFenMoveNumber } from './Header';
 
 export type PickChessJsMove = Pick<
@@ -37,6 +37,9 @@ export type Move = PickChessJsMove & {
 
     /** The material difference after this move is played. */
     materialDifference: number;
+
+    /** Cached normalized FEN after this move (for threefold detection). */
+    normalizedFen?: string;
 
     /** Whether the move is a null move. */
     isNullMove: boolean;
@@ -95,7 +98,10 @@ export class History {
     setUpFen: string;
     setUpPly: number;
     setUpMaterialDifference: number;
+    setUpNormalizedFen: string;
     moves: Move[] = [];
+    /** Reused chess.js instance for validateMove / addMove to avoid per-call allocation. */
+    private validationChess = new Chess();
 
     /**
      * Creates a new History object.
@@ -106,6 +112,7 @@ export class History {
     constructor(moves: PgnMove[], setUpFen: string = FEN.start, strict = false) {
         this.setUpFen = fixFenMoveNumber(setUpFen);
         this.setUpMaterialDifference = getMaterialDifference(this.setUpFen);
+        this.setUpNormalizedFen = normalizeFen(this.setUpFen);
 
         const fenTokens = this.setUpFen.split(/\s+/);
         const colorToPlay = fenTokens[1];
@@ -181,7 +188,7 @@ export class History {
                         chess.load(chessJsMove.after, { skipValidation: true });
                     }
 
-                    const move = this.getMove(ply, pgnMove, chessJsMove);
+                    const move = this.getMove(ply, pgnMove, chessJsMove, previousMove);
                     if (previousMove) {
                         move.previous = previousMove;
                         if (!previousMove.next) {
@@ -230,7 +237,7 @@ export class History {
      * @param chessJsMove The move from the Chess.js library.
      * @returns The Move object for the given data.
      */
-    getMove(ply: number, pgnMove: PgnMove, chessJsMove: PickChessJsMove): Move {
+    getMove(ply: number, pgnMove: PgnMove, chessJsMove: PickChessJsMove, previous: Move | null = null): Move {
         const move = chessJsMove as unknown as Move;
         move.previous = null;
         move.next = null;
@@ -244,7 +251,9 @@ export class History {
         move.commentAfter = pgnMove.commentAfter;
         move.commentMove = pgnMove.commentMove;
         move.commentDiag = convertChesscomHighlights(pgnMove.commentDiag);
-        move.materialDifference = getMaterialDifference(chessJsMove.after);
+        move.normalizedFen = normalizeFen(chessJsMove.after);
+        const baseMaterial = previous ? previous.materialDifference : this.setUpMaterialDifference;
+        move.materialDifference = baseMaterial + materialDelta(chessJsMove);
         return move;
     }
 
@@ -283,19 +292,15 @@ export class History {
             strict = false,
         }: { previous: Move | null; disableNullMoves?: boolean; strict?: boolean },
     ): Move | null {
-        const chess = new Chess();
-        if (previous) {
-            chess.load(previous.fen);
-        } else if (this.setUpFen) {
-            chess.load(this.setUpFen);
-        }
+        const chess = this.validationChess;
+        chess.load(previous ? previous.fen : this.setUpFen, { skipValidation: true });
 
         try {
             const chessJsMove = isNullMove(notation, chess)
                 ? getNullMove(chess, { disableNullMoves })
                 : chess.move(notation, { strict });
             if (chessJsMove) {
-                return this.getMove(previous ? previous.ply + 1 : this.setUpPly, {} as PgnMove, chessJsMove);
+                return this.getMove(previous ? previous.ply + 1 : this.setUpPly, {} as PgnMove, chessJsMove, previous);
             }
         } catch (err) {
             console.error(err);
@@ -379,50 +384,52 @@ export function renderVariation(variation: Move[], options?: HistoryRenderOption
  * @returns The variation as a PGN string. Output may include spaces before parenthesis and double spaces.
  */
 function renderVariationRecursive(variation: Move[], needReminder = false, options?: HistoryRenderOptions) {
-    let result = '';
+    const parts: string[] = [];
     for (let move of variation) {
         if (options?.skipNullMoves && move.san === nullMoveNotation) {
             break;
         }
 
         if (!options?.skipComments && move.commentMove) {
-            result += `{ ${move.commentMove} } `;
+            parts.push(`{ ${move.commentMove} } `);
             needReminder = true;
         }
 
         if (move.ply % 2 === 1) {
-            result += Math.floor(move.ply / 2) + 1 + '. ';
-        } else if (result.length === 0 || needReminder) {
-            result += move.ply / 2 + '... ';
+            parts.push(`${Math.floor(move.ply / 2) + 1}. `);
+        } else if (parts.length === 0 || needReminder) {
+            parts.push(`${move.ply / 2}... `);
         }
         needReminder = false;
 
-        result += move.san + ' ';
+        parts.push(`${move.san} `);
 
         if (!options?.skipNags && move.nags) {
-            result += move.nags.join(' ') + ' ';
+            parts.push(`${move.nags.join(' ')} `);
         }
 
         if (!options?.skipComments && move.commentAfter) {
-            result += `{ ${move.commentAfter} } `;
+            parts.push(`{ ${move.commentAfter} } `);
             needReminder = true;
         }
 
         if (move.commentDiag) {
             const commands = renderCommands(move.commentDiag, options);
-            result += commands;
+            parts.push(commands);
             needReminder = needReminder || commands.length > 0;
         }
 
         if (!options?.skipVariations && move.variations.length > 0) {
-            for (let variation of move.variations) {
-                result += '(' + renderVariation(variation, options) + ') ';
+            for (let nested of move.variations) {
+                parts.push('(');
+                parts.push(renderVariationRecursive(nested, false, options));
+                parts.push(') ');
                 needReminder = true;
             }
         }
-        result += ' ';
+        parts.push(' ');
     }
-    return result;
+    return parts.join('');
 }
 
 /**
@@ -463,6 +470,14 @@ export function isNullMove(candidate: CandidateMove, chess: Chess): boolean {
     return to?.type === KING && to.color !== chess.turn();
 }
 
+export interface GetNullMoveOptions extends MovesOptions {
+    /**
+     * When provided, used instead of scanning for stalemate/game-over when generating
+     * a null move. Pass the number of already-generated legal moves for the position.
+     */
+    legalMoveCount?: number;
+}
+
 /**
  * Makes a null move in the given Chess.js instance. The Move object is returned, or null
  * is returned if a null move is illegal in the given position. Null moves are illegal if
@@ -470,11 +485,22 @@ export function isNullMove(candidate: CandidateMove, chess: Chess): boolean {
  * @param chess The Chess.js instance.
  * @returns A Chess.js Move object for a null move, or null if a null move is illegal.
  */
-export function getNullMove(chess: Chess, options: MovesOptions = {}): PickChessJsMove | null {
+export function getNullMove(chess: Chess, options: GetNullMoveOptions = {}): PickChessJsMove | null {
     if (options.disableNullMoves || (options.piece && options.piece !== KING)) {
         return null;
     }
-    if (chess.isCheck() || chess.isGameOver()) {
+    if (chess.isCheck()) {
+        return null;
+    }
+    // Prefer caller-provided legal move count to avoid regenerating moves via isGameOver()
+    if (options.legalMoveCount !== undefined) {
+        if (options.legalMoveCount === 0) {
+            return null;
+        }
+    } else if (chess.isStalemate()) {
+        return null;
+    }
+    if (chess.isInsufficientMaterial() || chess.isDrawByFiftyMoves() || chess.isThreefoldRepetition()) {
         return null;
     }
 
@@ -645,4 +671,29 @@ export function getMaterialDifference(fen: string): number {
         materialDiff += fenValues[char] || 0;
     }
     return materialDiff;
+}
+
+const pieceValues: Record<string, number> = {
+    p: 1,
+    n: 3,
+    b: 3,
+    r: 5,
+    q: 9,
+};
+
+/**
+ * Returns the change in material difference caused by a single move (White-positive).
+ */
+function materialDelta(move: PickChessJsMove): number {
+    let delta = 0;
+    if (move.captured) {
+        const value = pieceValues[move.captured] || 0;
+        delta += move.color === 'w' ? value : -value;
+    }
+    if (move.promotion) {
+        const promo = pieceValues[move.promotion] || 0;
+        const change = promo - pieceValues.p;
+        delta += move.color === 'w' ? change : -change;
+    }
+    return delta;
 }

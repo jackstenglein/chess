@@ -6,6 +6,8 @@
 
 import { parse, Tags, SevenTagRoster } from '@jackstenglein/pgn-parser';
 
+const SevenTagRosterSet = new Set<string>(SevenTagRoster);
+
 /**
  * Contains PGN header information.
  */
@@ -89,10 +91,9 @@ export class Header {
             delete this.tags[name];
         } else {
             const newTags = parse(`[${name} "${escapeValue(value)}"]`, { startRule: 'tags' }).tags || {};
-            this.tags = {
-                ...this.tags,
-                ...newTags,
-            };
+            for (const key of Object.keys(newTags)) {
+                this.tags[key] = newTags[key];
+            }
         }
     }
 
@@ -113,22 +114,22 @@ export class Header {
      * @returns The tags as a PGN header string.
      */
     render() {
-        let rendered = '';
+        const parts: string[] = [];
 
         for (const tag of SevenTagRoster) {
             const value = this.getRawValue(tag);
             if (value) {
-                rendered += `[${tag} "${escapeValue(value)}"]\n`;
+                parts.push(`[${tag} "${escapeValue(value)}"]\n`);
             }
         }
 
         for (const tag in this.tags) {
-            if (!SevenTagRoster.includes(tag)) {
-                rendered += `[${tag} "${escapeValue(this.getRawValue(tag))}"]\n`;
+            if (!SevenTagRosterSet.has(tag)) {
+                parts.push(`[${tag} "${escapeValue(this.getRawValue(tag))}"]\n`);
             }
         }
 
-        return rendered;
+        return parts.join('');
     }
 }
 
