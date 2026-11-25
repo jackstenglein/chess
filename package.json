@@ -8,7 +8,8 @@
     "scripts": {
         "format": "prettier --write \"src/**/*.ts\"",
         "build": "npm run format && tsc -b ./tsconfig.cjs.json ./tsconfig.esm.json ./tsconfig.types.json",
-        "test": "jest --config jestconfig.json",
+        "test": "vitest run",
+        "test:watch": "vitest",
         "prepare": "npm run build",
         "prepublishOnly": "npm run format && npm run test",
         "postversion": "git push && git push --tags"
@@ -34,13 +35,11 @@
         "chess.js": "^1.4.0"
     },
     "devDependencies": {
-        "@types/jest": "^30.0.0",
         "@types/node": "^26.6.10",
-        "jest": "^30.2.0",
         "prettier": "^3.10.1",
-        "ts-jest": "^29.4.6",
         "tslint-config-prettier": "^1.18.0",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.12"
     },
     "eslintConfig": {
         "extends": [
